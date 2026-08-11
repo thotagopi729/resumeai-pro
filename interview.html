@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Interview Prep – ResumeAI Pro</title>
+<meta name="description" content="Master your job interviews with AI-powered mock interviews, instant answer feedback, STAR method framework, and role-specific question banks.">
+<link rel="stylesheet" href="css/main.css">
+<style>
+/* ── Interview Prep Page Styles ── */
+.prep-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.prep-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--space-6);
+}
+@media (max-width: 1024px) {
+  .prep-grid { grid-template-columns: 1fr; }
+}
+
+/* Sidebar Config Card */
+.config-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  height: fit-content;
+  position: sticky;
+  top: 90px;
+}
+
+.config-title {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.form-group {
+  margin-bottom: var(--space-4);
+}
+.form-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+/* Tabs */
+.prep-tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--border-primary);
+  margin-bottom: var(--space-6);
+}
+.tab-btn {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.tab-btn:hover { color: var(--text-secondary); }
+.tab-btn.active {
+  color: var(--primary-400);
+  border-bottom-color: var(--primary-500);
+}
+
+/* Mock Simulator */
+.simulator-box {
+  background: var(--surface-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  position: relative;
+  overflow: hidden;
+}
+
+.sim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.sim-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  background: rgba(99,102,241,0.15);
+  color: var(--primary-400);
+}
+
+.timer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  color: var(--warning-400);
+}
+
+.question-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  position: relative;
+}
+
+.q-number {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--primary-400);
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2);
+}
+
+.q-text {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: var(--space-3);
+}
+
+.q-tags {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.tag-badge {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.answer-area {
+  margin-bottom: var(--space-6);
+}
+
+.audio-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.mic-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+  border: none;
+  color: white;
+  font-size: var(--text-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+  transition: all var(--transition-fast);
+}
+.mic-btn:hover { transform: scale(1.05); }
+.mic-btn.recording {
+  animation: pulseMic 1.2s infinite;
+  background: linear-gradient(135deg, var(--error-500), var(--accent-600));
+}
+
+@keyframes pulseMic {
+  0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+  70% { box-shadow: 0 0 0 15px rgba(239,68,68,0); }
+  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+
+.response-textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: var(--space-4);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  resize: vertical;
+  transition: all var(--transition-fast);
+}
+.response-textarea:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  background: var(--surface-input);
+}
+
+/* Feedback Card */
+.feedback-box {
+  display: none;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-top: var(--space-6);
+  animation: fadeInUp 0.4s ease-out;
+}
+.feedback-box.visible { display: block; }
+
+.fb-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+@media (max-width: 768px) {
+  .fb-metrics { grid-template-columns: 1fr 1fr; }
+}
+
+.metric-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  text-align: center;
+}
+.metric-val {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--primary-400);
+}
+.metric-lbl {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
+}
+
+/* Question Bank List */
+.q-bank-item {
+  background: var(--surface-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+.q-bank-item:hover {
+  border-color: var(--primary-400);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.q-bank-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.q-bank-title {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.q-answer-collapse {
+  display: none;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.q-answer-collapse.open { display: block; }
+
+/* STAR Framework Grid */
+.star-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+@media (max-width: 768px) {
+  .star-grid { grid-template-columns: 1fr; }
+}
+
+.star-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.star-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-weight: 900;
+  font-size: var(--text-lg);
+  color: white;
+  margin-bottom: var(--space-3);
+}
+.sl-s { background: var(--primary-500); }
+.sl-t { background: var(--accent-500); }
+.sl-a { background: var(--success-500); }
+.sl-r { background: var(--warning-500); }
+
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span style="font-size:1.5rem">🚀</span>
+      <span class="sidebar-logo text-gradient">ResumeAI Pro</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Main</div>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="builder.html" class="nav-item"><span class="nav-icon">📝</span> Resume Builder</a>
+        <a href="templates.html" class="nav-item"><span class="nav-icon">🎨</span> Templates</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Optimize</div>
+        <a href="ats-scorer.html" class="nav-item"><span class="nav-icon">📈</span> ATS Score</a>
+        <a href="jd-matcher.html" class="nav-item"><span class="nav-icon">🎯</span> JD Matcher</a>
+        <a href="cover-letter.html" class="nav-item"><span class="nav-icon">✉️</span> Cover Letter</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Prepare</div>
+        <a href="interview.html" class="nav-item active"><span class="nav-icon">🎤</span> Interview Prep</a>
+        <a href="analytics.html" class="nav-item"><span class="nav-icon">📉</span> Analytics</a>
+        <a href="linkedin.html" class="nav-item"><span class="nav-icon">💼</span> LinkedIn</a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Header -->
+    <header class="app-header">
+      <div style="display:flex; align-items:center; gap:var(--space-3)">
+        <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+        <div>
+          <h1 style="font-size:var(--text-xl); font-weight:800">AI Interview Prep & Simulator</h1>
+          <p style="font-size:var(--text-xs); color:var(--text-tertiary)">Practice real-world interview questions with AI evaluation, STAR story builder & instant feedback.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:var(--space-3)">
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
+        <a href="builder.html" class="btn btn-primary btn-sm">📝 Back to Builder</a>
+      </div>
+    </header>
+
+    <div class="content-body prep-container">
+      
+      <!-- Top Navigation Tabs -->
+      <div class="prep-tabs">
+        <button class="tab-btn active" onclick="switchPrepTab('simulator')">🎤 Interactive Simulator</button>
+        <button class="tab-btn" onclick="switchPrepTab('bank')">📚 Question Bank (50+)</button>
+        <button class="tab-btn" onclick="switchPrepTab('star')">⭐ STAR Story Framework</button>
+      </div>
+
+      <div class="prep-grid">
+        
+        <!-- Sidebar Controls / Profile Setup -->
+        <aside class="config-card">
+          <div class="config-title">
+            <span>⚙️</span> Target Role & Level
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Job Role</label>
+            <select class="form-control" id="roleSelect" onchange="updateQuestionPool()">
+              <option value="swe">Software Engineer</option>
+              <option value="frontend">Frontend Developer</option>
+              <option value="pm">Product Manager</option>
+              <option value="ds">Data Scientist / AI Engineer</option>
+              <option value="devops">DevOps / Cloud Engineer</option>
+              <option value="marketing">Digital Marketing Manager</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Experience Level</label>
+            <select class="form-control" id="levelSelect">
+              <option value="entry">Entry Level (0-2 YOE)</option>
+              <option value="mid" selected>Mid-Level (3-5 YOE)</option>
+              <option value="senior">Senior / Lead (6+ YOE)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Interview Type</label>
+            <select class="form-control" id="typeSelect" onchange="updateQuestionPool()">
+              <option value="behavioral">Behavioral & Soft Skills</option>
+              <option value="technical">Technical Core & Architecture</option>
+              <option value="situational">Situational & Problem Solving</option>
+              <option value="hr">HR & Salary Expectations</option>
+            </select>
+          </div>
+
+          <div style="border-top:1px solid var(--border-primary); padding-top:var(--space-4); margin-top:var(--space-4)">
+            <div style="font-size:var(--text-xs); font-weight:700; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:var(--space-3)">Prep Progress</div>
+            <div style="display:flex; justify-content:space-between; font-size:var(--text-xs); margin-bottom:4px">
+              <span>Readiness Index</span>
+              <span style="font-weight:700; color:var(--primary-400)">85%</span>
+            </div>
+            <div style="height:6px; background:var(--bg-tertiary); border-radius:3px; overflow:hidden">
+              <div style="width:85%; height:100%; background:linear-gradient(90deg, var(--primary-500), var(--success-500))"></div>
+            </div>
+            <p style="font-size:var(--text-xs); color:var(--text-tertiary); margin-top:var(--space-3)">Completed 14 questions across 4 mock sessions this week.</p>
+          </div>
+        </aside>
+
+        <!-- Main Tab Contents -->
+        <section>
+
+          <!-- TAB 1: INTERACTIVE SIMULATOR -->
+          <div id="tab-simulator" class="tab-content">
+            <div class="simulator-box">
+              <div class="sim-header">
+                <div class="sim-badge">
+                  <span>●</span> AI Mock Session Live
+                </div>
+                <div style="display:flex; align-items:center; gap:var(--space-3)">
+                  <div class="timer-badge" id="sessionTimer">⏱️ 02:45</div>
+                  <button class="btn btn-secondary btn-sm" onclick="nextQuestion()">➡️ Skip Question</button>
+                </div>
+              </div>
+
+              <!-- Question Display -->
+              <div class="question-card">
+                <div class="q-number">Question <span id="currentQNum">1</span> of 5</div>
+                <div class="q-text" id="questionText">"Tell me about a time when you had to deal with conflicting technical priorities or tight deadlines. How did you handle it?"</div>
+                <div class="q-tags">
+                  <span class="tag-badge">Behavioral</span>
+                  <span class="tag-badge">Conflict Resolution</span>
+                  <span class="tag-badge">STAR Recommended</span>
+                </div>
+                <button class="btn btn-sm btn-ghost" style="position:absolute; top:var(--space-4); right:var(--space-4)" onclick="speakQuestion()">🔊 Read Aloud</button>
+              </div>
+
+              <!-- Answer Input & Audio Controls -->
+              <div class="answer-area">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2)">
+                  <label class="form-label" style="margin-bottom:0">Your Response</label>
+                  <span style="font-size:var(--text-xs); color:var(--text-tertiary)" id="wordCount">0 words</span>
+                </div>
+                
+                <div class="audio-controls">
+                  <button class="mic-btn" id="micBtn" onclick="toggleVoiceRecording()" title="Click to Simulate Voice Recording">🎤</button>
+                  <div style="font-size:var(--text-xs); color:var(--text-secondary)">
+                    <strong id="recStatus">Click mic to record response (Voice Simulation)</strong>
+                    <div style="color:var(--text-tertiary)">Or type your answer in the box below</div>
+                  </div>
+                </div>
+
+                <textarea class="response-textarea" id="userAnswerText" placeholder="Type or dictate your response here using the STAR method (Situation, Task, Action, Result)..." oninput="updateWordCount()"></textarea>
+              </div>
+
+              <!-- Action Bar -->
+              <div style="display:flex; gap:var(--space-3); justify-content:flex-end">
+                <button class="btn btn-secondary" onclick="insertSampleAnswer()">💡 Auto-Fill Sample Answer</button>
+                <button class="btn btn-primary" onclick="evaluateAnswer()">✨ Evaluate Answer with AI</button>
+              </div>
+
+              <!-- AI Evaluation Result -->
+              <div class="feedback-box" id="feedbackBox">
+                <h3 style="font-size:var(--text-lg); font-weight:800; margin-bottom:var(--space-4); display:flex; align-items:center; gap:var(--space-2)">
+                  🎯 AI Answer Feedback & Analysis
+                </h3>
+
+                <div class="fb-metrics">
+                  <div class="metric-card">
+                    <div class="metric-val" id="scoreOverall">94%</div>
+                    <div class="metric-lbl">Overall Quality</div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-val" style="color:var(--success-400)" id="scoreStar">STAR Match</div>
+                    <div class="metric-lbl">Methodology</div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-val" style="color:var(--accent-400)" id="scorePace">Normal</div>
+                    <div class="metric-lbl">Pace & Tone</div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-val" style="color:var(--warning-400)" id="scoreClarity">High</div>
+                    <div class="metric-lbl">Clarity & Impact</div>
+                  </div>
+                </div>
+
+                <div style="background:var(--surface-card); border-radius:var(--radius-lg); padding:var(--space-4); margin-bottom:var(--space-4)">
+                  <h4 style="font-size:var(--text-sm); font-weight:700; color:var(--success-400); margin-bottom:var(--space-2)">✅ Key Strengths</h4>
+                  <ul style="padding-left:var(--space-5); font-size:var(--text-sm); color:var(--text-secondary)" id="strengthsList">
+                    <li>Clear context given for the high-priority deadline.</li>
+                    <li>Strong focus on proactive communication with stakeholders.</li>
+                    <li>Quantified business impact in the result section.</li>
+                  </ul>
+                </div>
+
+                <div style="background:var(--surface-card); border-radius:var(--radius-lg); padding:var(--space-4); margin-bottom:var(--space-4)">
+                  <h4 style="font-size:var(--text-sm); font-weight:700; color:var(--primary-400); margin-bottom:var(--space-2)">💡 Ideal Model Answer</h4>
+                  <p style="font-size:var(--text-sm); color:var(--text-secondary); line-height:1.6" id="modelAnswerText">
+                    "At my previous company, we faced a critical release deadline while discovering a severe API bottleneck. (Situation) I was responsible for delivering the core billing component on time. (Task) I organized a quick triage sync, re-negotiated non-critical requirements with the PM, and refactored the query pipeline. (Action) As a result, we hit the deadline with 0 downtime and improved API response speed by 35%. (Result)"
+                  </p>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end">
+                  <button class="btn btn-primary" onclick="nextQuestion()">Next Question ➡️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: QUESTION BANK -->
+          <div id="tab-bank" class="tab-content" style="display:none">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4)">
+              <input type="text" class="form-control" id="bankSearch" placeholder="🔍 Search questions by keyword or topic..." style="max-width:400px" onkeyup="filterBank()">
+              <span style="font-size:var(--text-xs); color:var(--text-tertiary)">Showing top questions curated for top tech companies</span>
+            </div>
+
+            <div id="bankList">
+              <div class="q-bank-item" onclick="toggleAnswer(this)">
+                <div class="q-bank-header">
+                  <div>
+                    <div class="q-bank-title">What is your biggest weakness and how do you work to overcome it?</div>
+                    <div class="q-tags">
+                      <span class="tag-badge">HR & Behavioral</span>
+                      <span class="tag-badge">Self-Awareness</span>
+                    </div>
+                  </div>
+                  <span style="font-size:var(--text-xs); color:var(--primary-400); font-weight:700">Click to View Model Answer ▼</span>
+                </div>
+                <div class="q-answer-collapse">
+                  <strong>Model Answer Strategy:</strong> Pick a real professional area of growth (e.g., delegating tasks early or public speaking) and demonstrate actionable steps you take to address it. Avoid humblebrags like "I work too hard".
+                </div>
+              </div>
+
+              <div class="q-bank-item" onclick="toggleAnswer(this)">
+                <div class="q-bank-header">
+                  <div>
+                    <div class="q-bank-title">Explain the difference between SQL and NoSQL databases. When would you choose one over the other?</div>
+                    <div class="q-tags">
+                      <span class="tag-badge">Technical Core</span>
+                      <span class="tag-badge">System Design</span>
+                    </div>
+                  </div>
+                  <span style="font-size:var(--text-xs); color:var(--primary-400); font-weight:700">Click to View Model Answer ▼</span>
+                </div>
+                <div class="q-answer-collapse">
+                  <strong>Model Answer Strategy:</strong> Compare relational structured schema (ACID compliance, SQL) vs document/key-value flexible scaling (NoSQL). Mention choosing SQL for financial transactions and NoSQL for real-time analytics or unstructured data feeds.
+                </div>
+              </div>
+
+              <div class="q-bank-item" onclick="toggleAnswer(this)">
+                <div class="q-bank-header">
+                  <div>
+                    <div class="q-bank-title">How do you handle a situation where a teammate is underperforming on a shared deliverable?</div>
+                    <div class="q-tags">
+                      <span class="tag-badge">Leadership</span>
+                      <span class="tag-badge">Team Dynamics</span>
+                    </div>
+                  </div>
+                  <span style="font-size:var(--text-xs); color:var(--primary-400); font-weight:700">Click to View Model Answer ▼</span>
+                </div>
+                <div class="q-answer-collapse">
+                  <strong>Model Answer Strategy:</strong> Empathize first in a private 1-on-1 setting, understand blockers, offer assistance on tasks, and establish clear checkpoints without micromanaging or escalating prematurely.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: STAR STORY FRAMEWORK -->
+          <div id="tab-star" class="tab-content" style="display:none">
+            <div class="card" style="margin-bottom:var(--space-6)">
+              <h2 style="font-size:var(--text-lg); font-weight:800; margin-bottom:var(--space-2)">⭐ STAR Method Story Builder</h2>
+              <p style="font-size:var(--text-xs); color:var(--text-tertiary); margin-bottom:var(--space-4)">Structure your accomplishments into high-impact behavioral answers that impress hiring managers.</p>
+
+              <div class="star-grid">
+                <div class="star-card">
+                  <div class="sl-s star-letter">S</div>
+                  <h4 style="font-size:var(--text-sm); font-weight:700; margin-bottom:var(--space-2)">Situation</h4>
+                  <p style="font-size:var(--text-xs); color:var(--text-tertiary); margin-bottom:var(--space-3)">Set the scene and provide necessary details of your example.</p>
+                  <textarea class="form-control" rows="3" placeholder="Example: Our main database cluster experienced a 40% latency spike during peak sale events..."></textarea>
+                </div>
+
+                <div class="star-card">
+                  <div class="sl-t star-letter">T</div>
+                  <h4 style="font-size:var(--text-sm); font-weight:700; margin-bottom:var(--space-2)">Task</h4>
+                  <p style="font-size:var(--text-xs); color:var(--text-tertiary); margin-bottom:var(--space-3)">Describe your specific responsibility in the situation.</p>
+                  <textarea class="form-control" rows="3" placeholder="Example: My goal was to identify the root bottleneck and restore response times under 200ms without data loss..."></textarea>
+                </div>
+
+                <div class="star-card">
+                  <div class="sl-a star-letter">A</div>
+                  <h4 style="font-size:var(--text-sm); font-weight:700; margin-bottom:var(--space-2)">Action</h4>
+                  <p style="font-size:var(--text-xs); color:var(--text-tertiary); margin-bottom:var(--space-3)">Explain exactly what steps you took to address the challenge.</p>
+                  <textarea class="form-control" rows="3" placeholder="Example: I implemented Redis caching, optimized indexing, and reconfigured connection pooling..."></textarea>
+                </div>
+
+                <div class="star-card">
+                  <div class="sl-r star-letter">R</div>
+                  <h4 style="font-size:var(--text-sm); font-weight:700; margin-bottom:var(--space-2)">Result</h4>
+                  <p style="font-size:var(--text-xs); color:var(--text-tertiary); margin-bottom:var(--space-3)">Share the outcomes and quantify your achievements with metrics.</p>
+                  <textarea class="form-control" rows="3" placeholder="Example: Reduced query latency by 65%, prevented downtime, and saved $15k in server infrastructure costs..."></textarea>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; margin-top:var(--space-4)">
+                <button class="btn btn-primary" onclick="alert('STAR Story Saved to your Interview Prep Notebook!')">💾 Save Story to Notebook</button>
+              </div>
+            </div>
+          </div>
+
+        </section>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// Toggle Theme
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+}
+
+// Toggle Sidebar
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// Switch Tabs
+function switchPrepTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+  
+  event.currentTarget.classList.add('active');
+  document.getElementById('tab-' + tabId).style.display = 'block';
+}
+
+// Question Pool Data
+const questionBank = {
+  swe: [
+    "Tell me about a time when you had to deal with conflicting technical priorities or tight deadlines.",
+    "Describe a complex software architecture bug you debugged. What toolings and steps did you use?",
+    "How do you ensure high code quality and test coverage when shipping fast?"
+  ],
+  frontend: [
+    "How do you optimize initial page load performance and Cumulative Layout Shift (CLS) in modern web applications?",
+    "Describe a challenging state management scenario you resolved in React/Vue/Angular.",
+    "How do you handle accessibility (a11y) and cross-browser compatibility during development?"
+  ],
+  pm: [
+    "How do you prioritize feature requests when engineering resources are constrained?",
+    "Walk me through a product launch that didn't go as planned. What did you learn?",
+    "How do you measure product success beyond surface vanity metrics?"
+  ]
+};
+
+let currentQIndex = 0;
+function updateQuestionPool() {
+  const role = document.getElementById('roleSelect').value;
+  const pool = questionBank[role] || questionBank.swe;
+  currentQIndex = 0;
+  document.getElementById('questionText').innerText = `"${pool[0]}"`;
+  document.getElementById('currentQNum').innerText = "1";
+  document.getElementById('feedbackBox').classList.remove('visible');
+  document.getElementById('userAnswerText').value = "";
+  updateWordCount();
+}
+
+function nextQuestion() {
+  const role = document.getElementById('roleSelect').value;
+  const pool = questionBank[role] || questionBank.swe;
+  currentQIndex = (currentQIndex + 1) % pool.length;
+  document.getElementById('questionText').innerText = `"${pool[currentQIndex]}"`;
+  document.getElementById('currentQNum').innerText = currentQIndex + 1;
+  document.getElementById('feedbackBox').classList.remove('visible');
+  document.getElementById('userAnswerText').value = "";
+  updateWordCount();
+}
+
+// Speak Question
+function speakQuestion() {
+  const text = document.getElementById('questionText').innerText;
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    window.speechSynthesis.speak(utterance);
+  } else {
+    alert("Speech Synthesis simulation active.");
+  }
+}
+
+// Mic Recording Simulation
+let isRecording = false;
+function toggleVoiceRecording() {
+  const btn = document.getElementById('micBtn');
+  const status = document.getElementById('recStatus');
+  if (!isRecording) {
+    isRecording = true;
+    btn.classList.add('recording');
+    status.innerText = "🔴 Listening... Speak clearly into your microphone.";
+    status.style.color = "var(--error-400)";
+  } else {
+    isRecording = false;
+    btn.classList.remove('recording');
+    status.innerText = "✅ Voice recorded successfully! Generating transcript...";
+    status.style.color = "var(--success-400)";
+    insertSampleAnswer();
+  }
+}
+
+// Auto-fill & Word Count
+function insertSampleAnswer() {
+  const text = "In my last role, we had a major release scheduled while encountering database connection spikes. I prioritized fixing the core API layer first, communicated transparently with product managers, and deployed a Redis caching strategy. As a result, server response times dropped by 40% and we met our client launch deadline without any downtime.";
+  document.getElementById('userAnswerText').value = text;
+  updateWordCount();
+}
+
+function updateWordCount() {
+  const text = document.getElementById('userAnswerText').value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  document.getElementById('wordCount').innerText = `${words} words`;
+}
+
+// AI Evaluation
+function evaluateAnswer() {
+  const text = document.getElementById('userAnswerText').value.trim();
+  if (!text) {
+    alert("Please provide or dictate an answer before evaluating!");
+    return;
+  }
+  document.getElementById('feedbackBox').classList.add('visible');
+  document.getElementById('feedbackBox').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Expand Question Bank
+function toggleAnswer(el) {
+  const collapse = el.querySelector('.q-answer-collapse');
+  collapse.classList.toggle('open');
+}
+
+// Filter Bank
+function filterBank() {
+  const query = document.getElementById('bankSearch').value.toLowerCase();
+  document.querySelectorAll('.q-bank-item').forEach(item => {
+    const text = item.innerText.toLowerCase();
+    item.style.display = text.includes(query) ? 'block' : 'none';
+  });
+}
+</script>
+</body>
+</html>
