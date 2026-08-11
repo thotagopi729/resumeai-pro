@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cover Letter Generator – ResumeAI Pro</title>
+<meta name="description" content="Generate professional, ATS-optimized cover letters tailored to any job description with AI-powered writing assistance.">
+<link rel="stylesheet" href="css/main.css">
+<style>
+/* ── Cover Letter Page Styles ── */
+.cl-layout {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+@media (max-width: 1024px) {
+  .cl-layout { grid-template-columns: 1fr; }
+}
+
+/* Config panel */
+.config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Letter preview card - always white */
+.letter-card {
+  background: #ffffff !important;
+  color: #1a1a2e !important;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
+  padding: var(--space-10) var(--space-10);
+  font-family: 'Inter', Georgia, serif;
+  font-size: 14px;
+  line-height: 1.75;
+  min-height: 400px;
+  position: relative;
+  transition: box-shadow var(--transition-base);
+}
+.letter-card:hover {
+  box-shadow: var(--shadow-2xl), 0 0 60px rgba(99,102,241,0.1);
+}
+
+.letter-header-info {
+  color: #374151;
+  font-size: 13px;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+.letter-sender-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 2px;
+}
+.letter-sender-details {
+  font-size: 12px;
+  color: #6b7280;
+}
+.letter-date {
+  margin: 16px 0;
+  color: #374151;
+  font-size: 13px;
+}
+.letter-recipient {
+  color: #374151;
+  font-size: 13px;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.letter-salutation {
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+}
+.letter-body p {
+  color: #374151;
+  margin-bottom: 14px;
+  text-align: justify;
+}
+.letter-closing {
+  margin-top: 20px;
+  color: #374151;
+}
+.letter-signature {
+  font-weight: 700;
+  color: #111827;
+  margin-top: 4px;
+}
+
+/* Letter meta bar */
+.letter-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-primary);
+}
+
+/* Action buttons */
+.action-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+
+/* Empty state */
+.empty-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #9ca3af;
+  text-align: center;
+}
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: var(--space-4);
+  opacity: 0.4;
+}
+.empty-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+  color: #6b7280;
+}
+.empty-desc {
+  font-size: var(--text-sm);
+  color: #9ca3af;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  z-index: var(--z-modal);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.loading-overlay.active {
+  display: flex;
+}
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--border-primary);
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.loading-text {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--text-base);
+}
+
+/* Editable state */
+.letter-card[contenteditable="true"] {
+  outline: 2px dashed var(--primary-400);
+  outline-offset: 4px;
+}
+
+.mobile-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary); }
+@media (max-width: 768px) {
+  .mobile-toggle { display: block; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header"><span style="font-size:1.5rem">🚀</span><span class="sidebar-logo text-gradient">ResumeAI Pro</span></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section"><div class="sidebar-section-title">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="builder.html" class="nav-item"><span class="nav-icon">📝</span> Resume Builder</a>
+      <a href="templates.html" class="nav-item"><span class="nav-icon">🎨</span> Templates</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Optimize</div>
+      <a href="ats-scorer.html" class="nav-item"><span class="nav-icon">📈</span> ATS Score</a>
+      <a href="jd-matcher.html" class="nav-item"><span class="nav-icon">🎯</span> JD Matcher</a>
+      <a href="cover-letter.html" class="nav-item active"><span class="nav-icon">✉️</span> Cover Letter</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Prepare</div>
+      <a href="interview.html" class="nav-item"><span class="nav-icon">🎤</span> Interview Prep</a>
+      <a href="career.html" class="nav-item"><span class="nav-icon">🗺️</span> Career Guide</a>
+      <a href="tracker.html" class="nav-item"><span class="nav-icon">📋</span> Job Tracker</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Insights</div>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📉</span> Analytics</a>
+      <a href="linkedin.html" class="nav-item"><span class="nav-icon">💼</span> LinkedIn</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">System</div>
+      <a href="admin.html" class="nav-item"><span class="nav-icon">⚙️</span> Admin Panel</a></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="flex items-center gap-3" style="margin-bottom:0.75rem"><div class="avatar" style="width:36px;height:36px;font-size:0.75rem">AJ</div><div><div class="font-semibold text-sm">Alex Johnson</div><span class="badge badge-primary" style="font-size:10px">PRO</span></div></div>
+    <button class="theme-toggle w-full" onclick="toggleTheme()" style="cursor:pointer"></button>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main-content">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="flex items-center gap-4">
+      <button class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <h1 class="text-xl font-bold">AI Cover Letter Generator</h1>
+      <span class="badge badge-accent">AI-Powered</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-sm text-secondary">3 letters generated today</span>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="cl-layout">
+      <!-- LEFT: Configuration -->
+      <div class="config-panel">
+        <div class="card">
+          <div class="flex items-center gap-3 mb-6">
+            <span style="font-size:1.3rem">⚙️</span>
+            <div>
+              <div class="font-semibold">Letter Configuration</div>
+              <div class="text-xs text-secondary">Customize your cover letter settings</div>
+            </div>
+          </div>
+
+          <!-- Company Name -->
+          <div class="input-group mb-4">
+            <label class="input-label" for="companyName">Company Name</label>
+            <input type="text" class="input" id="companyName" value="Google" placeholder="Enter company name">
+          </div>
+
+          <!-- Job Title -->
+          <div class="input-group mb-4">
+            <label class="input-label" for="jobTitle">Job Title</label>
+            <input type="text" class="input" id="jobTitle" value="Senior Software Engineer" placeholder="Enter job title">
+          </div>
+
+          <!-- Brief JD -->
+          <div class="input-group mb-6">
+            <label class="input-label" for="briefJd">Brief Job Description</label>
+            <textarea class="textarea" id="briefJd" style="min-height:90px" placeholder="Briefly describe the role...">Design and build large-scale distributed systems for Google Cloud Platform. Lead technical reviews, mentor engineers, and optimize system performance. Requires 5+ years experience with Python, Go, or Java.</textarea>
+          </div>
+
+          <!-- Style Tabs -->
+          <div class="input-group mb-4">
+            <label class="input-label">Writing Style</label>
+            <div class="tabs" id="styleTabs">
+              <button class="tab active" data-style="ats" onclick="setStyle(this)">ATS-Friendly</button>
+              <button class="tab" data-style="hr" onclick="setStyle(this)">HR-Focused</button>
+              <button class="tab" data-style="short" onclick="setStyle(this)">Short</button>
+              <button class="tab" data-style="detailed" onclick="setStyle(this)">Detailed</button>
+            </div>
+          </div>
+
+          <!-- Tone Dropdown -->
+          <div class="input-group mb-6">
+            <label class="input-label" for="toneSelect">Tone</label>
+            <select class="select w-full" id="toneSelect">
+              <option value="Professional" selected>Professional</option>
+              <option value="Enthusiastic">Enthusiastic</option>
+              <option value="Confident">Confident</option>
+              <option value="Conversational">Conversational</option>
+            </select>
+          </div>
+
+          <!-- Generate Button -->
+          <button class="btn btn-primary btn-lg w-full" id="generateBtn" onclick="generateLetter()" style="font-size: var(--text-base);">
+            <span id="generateBtnContent">Generate Cover Letter ✨</span>
+          </button>
+        </div>
+
+        <!-- Tips Accordion -->
+        <div class="card" id="tipsSection">
+          <div class="flex items-center gap-3 mb-4">
+            <span style="font-size:1.3rem">💡</span>
+            <div class="font-semibold">Pro Tips</div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-header" onclick="toggleAccordion(this)">
+              <span>Keep it concise</span>
+              <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-body">
+              <div class="accordion-content">
+                <p class="text-sm text-secondary" style="line-height:1.7">The ideal cover letter is 250–400 words. Hiring managers spend an average of 7 seconds scanning a cover letter. Make every word count by focusing on your most relevant achievements and how they directly relate to the job requirements.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-header" onclick="toggleAccordion(this)">
+              <span>Customize for each role</span>
+              <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-body">
+              <div class="accordion-content">
+                <p class="text-sm text-secondary" style="line-height:1.7">Generic cover letters are easily spotted and often rejected. Reference specific projects, team names, or company values mentioned in the job posting. Show that you've done your research and genuinely want this specific role at this specific company.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <button class="accordion-header" onclick="toggleAccordion(this)">
+              <span>Show, don't tell</span>
+              <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-body">
+              <div class="accordion-content">
+                <p class="text-sm text-secondary" style="line-height:1.7">Instead of saying "I'm a great team player," describe a specific situation where your collaboration led to a measurable outcome. Use the STAR method (Situation, Task, Action, Result) to structure your achievements with concrete numbers and metrics.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Preview -->
+      <div>
+        <div class="card" id="previewCard">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <span style="font-size:1.3rem">📄</span>
+              <div>
+                <div class="font-semibold">Letter Preview</div>
+                <div class="text-xs text-secondary" id="previewSubtitle">Configure and generate your letter</div>
+              </div>
+            </div>
+            <div id="letterBadges" style="display:none" class="flex items-center gap-2">
+              <span class="badge badge-primary" id="wordCountBadge">247 words</span>
+              <span class="badge badge-accent" id="toneBadge">Professional</span>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div id="emptyState">
+            <div class="letter-card">
+              <div class="empty-preview">
+                <div class="empty-icon">✉️</div>
+                <div class="empty-title">Your cover letter will appear here</div>
+                <div class="empty-desc">Fill in the details on the left and click "Generate" to create your personalized cover letter.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Generated Letter -->
+          <div id="letterContent" style="display:none">
+            <div class="letter-card" id="letterCard">
+              <div id="letterText"></div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-row" id="actionRow">
+              <button class="btn btn-secondary" onclick="copyLetter()">
+                <span id="copyBtnText">📋 Copy</span>
+              </button>
+              <button class="btn btn-secondary" onclick="downloadPDF()">📄 Download PDF</button>
+              <button class="btn btn-secondary" onclick="regenerateLetter()">
+                <span id="regenerateBtnText">🔄 Regenerate</span>
+              </button>
+              <button class="btn btn-secondary" id="editBtn" onclick="toggleEdit()">✏️ Edit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Generating your cover letter...</div>
+  <div class="text-sm text-secondary">Crafting personalized content with AI</div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Copilot Widget -->
+<div class="copilot-widget"><button class="copilot-btn" onclick="document.getElementById('copilotPanel').classList.toggle('open')">✨</button><div class="copilot-panel" id="copilotPanel"><div class="copilot-header"><span style="font-size:1.2rem">🤖</span><div style="flex:1"><div class="font-semibold" style="font-size:0.9rem">AI Career Copilot</div><div style="font-size:0.65rem;opacity:0.8">● Online</div></div><button onclick="document.getElementById('copilotPanel').classList.remove('open')" style="background:none;border:none;color:white;cursor:pointer;font-size:1.1rem">✕</button></div><div class="copilot-messages" id="copilotMessages"><div class="copilot-msg ai">Hi! 👋 How can I help?</div></div><div class="copilot-input-area"><input class="copilot-input" id="copilotInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendMsg()"><button class="copilot-send" onclick="sendMsg()">→</button></div></div></div>
+
+<script>
+// Theme toggle
+function toggleTheme(){const h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();
+
+// Copilot
+const aiR=['I can help with that!','Great question! Let me provide some insights.','Based on your profile, here are my recommendations.','I suggest focusing on quantifiable achievements.'];let aI=0;
+function sendMsg(){const i=document.getElementById('copilotInput'),m=i.value.trim();if(!m)return;const c=document.getElementById('copilotMessages');c.innerHTML+='<div class="copilot-msg user">'+m+'</div>';i.value='';c.scrollTop=c.scrollHeight;setTimeout(()=>{c.innerHTML+='<div class="copilot-msg ai">'+aiR[aI++%aiR.length]+'</div>';c.scrollTop=c.scrollHeight},1000)}
+
+// ── Letter Content Templates ──
+const letterTemplates = {
+  ats: {
+    content: `<div class="letter-sender-name">Alex Johnson</div>
+<div class="letter-sender-details">San Francisco, CA | alex.johnson@email.com | (555) 123-4567</div>
+
+<div class="letter-date">June 27, 2024</div>
+
+<div class="letter-recipient">Hiring Manager<br>{{company}}<br>Mountain View, CA</div>
+
+<div class="letter-salutation">Dear Hiring Manager,</div>
+
+<div class="letter-body">
+<p>I am writing to express my strong interest in the {{title}} position at {{company}}. With over 6 years of experience building scalable distributed systems and a proven track record of leading engineering teams, I am excited about the opportunity to contribute to {{company}}'s Cloud Platform team.</p>
+
+<p>In my current role at TechCorp Inc., I have architected and deployed microservices handling 10M+ daily requests using Python, FastAPI, and Kubernetes. I led a team of 5 engineers in redesigning our authentication system, reducing login failures by 75% and improving user satisfaction scores by 30%. My experience with CI/CD pipelines has decreased deployment time from 4 hours to 15 minutes, enabling our team to ship features 10x faster.</p>
+
+<p>I am particularly drawn to {{company}}'s commitment to engineering excellence and the scale at which your Cloud Platform operates. My background in building high-performance distributed systems, combined with my passion for mentoring junior engineers and driving technical innovation, aligns perfectly with the responsibilities of this role.</p>
+
+<p>I would welcome the opportunity to discuss how my experience in scalable systems architecture, team leadership, and cloud technologies can contribute to {{company}}'s continued success. Thank you for considering my application.</p>
+</div>
+
+<div class="letter-closing">Sincerely,</div>
+<div class="letter-signature">Alex Johnson</div>`,
+    wordCount: 247,
+    tone: 'Professional'
+  },
+  hr: {
+    content: `<div class="letter-sender-name">Alex Johnson</div>
+<div class="letter-sender-details">San Francisco, CA | alex.johnson@email.com | (555) 123-4567</div>
+
+<div class="letter-date">June 27, 2024</div>
+
+<div class="letter-recipient">Hiring Manager<br>{{company}}<br>Mountain View, CA</div>
+
+<div class="letter-salutation">Dear Hiring Manager,</div>
+
+<div class="letter-body">
+<p>When I read about the {{title}} position at {{company}}, I felt an immediate connection to your mission. Having spent the last six years building technology that makes people's lives easier, I'm thrilled at the possibility of bringing that same energy to your Cloud Platform team.</p>
+
+<p>What I love most about engineering isn't just writing code — it's the collaborative problem-solving. At TechCorp Inc., I built lasting relationships across teams while leading a critical authentication overhaul that reduced login failures by 75%. My teammates often say I'm the person who turns complex technical challenges into clear, actionable plans everyone can rally behind.</p>
+
+<p>I'm the type of engineer who stays late not because I have to, but because I genuinely care about the craft. Whether it's mentoring a junior developer through their first production deployment or spending a weekend contributing to open source projects, I find deep fulfillment in helping others grow alongside the technology.</p>
+
+<p>I'd love the chance to share more about how my passion for people-centered engineering could contribute to {{company}}'s incredible culture. Let's chat!</p>
+</div>
+
+<div class="letter-closing">Warm regards,</div>
+<div class="letter-signature">Alex Johnson</div>`,
+    wordCount: 203,
+    tone: 'Enthusiastic'
+  },
+  short: {
+    content: `<div class="letter-sender-name">Alex Johnson</div>
+<div class="letter-sender-details">San Francisco, CA | alex.johnson@email.com | (555) 123-4567</div>
+
+<div class="letter-date">June 27, 2024</div>
+
+<div class="letter-recipient">Hiring Manager<br>{{company}}<br>Mountain View, CA</div>
+
+<div class="letter-salutation">Dear Hiring Manager,</div>
+
+<div class="letter-body">
+<p>I'm applying for the {{title}} position at {{company}}. With 6+ years building distributed systems and leading engineering teams, I'm confident I can make an immediate impact on your Cloud Platform team.</p>
+
+<p>Key highlights: I've architected microservices handling 10M+ daily requests, reduced deployment time by 94% through CI/CD optimization, and led a team that improved user satisfaction by 30%. I'm proficient in Python, Kubernetes, and cloud infrastructure.</p>
+
+<p>I'd welcome the opportunity to discuss how my skills align with {{company}}'s needs. Thank you for your consideration.</p>
+</div>
+
+<div class="letter-closing">Best regards,</div>
+<div class="letter-signature">Alex Johnson</div>`,
+    wordCount: 118,
+    tone: 'Confident'
+  },
+  detailed: {
+    content: `<div class="letter-sender-name">Alex Johnson</div>
+<div class="letter-sender-details">San Francisco, CA | alex.johnson@email.com | (555) 123-4567</div>
+
+<div class="letter-date">June 27, 2024</div>
+
+<div class="letter-recipient">Hiring Manager<br>{{company}}<br>Mountain View, CA</div>
+
+<div class="letter-salutation">Dear Hiring Manager,</div>
+
+<div class="letter-body">
+<p>I am writing to express my strong interest in the {{title}} position at {{company}}. With over 6 years of progressive experience in software engineering, specializing in distributed systems architecture and cloud-native application development, I believe I am exceptionally well-positioned to contribute meaningfully to your Cloud Platform team.</p>
+
+<p>In my current role as Senior Software Engineer at TechCorp Inc., I have spearheaded the design and implementation of a microservices architecture that processes over 10 million daily requests with 99.97% uptime. This migration from a monolithic system reduced infrastructure costs by 40% while improving response times by 60%. I architected the service mesh using Kubernetes, Istio, and custom gRPC protocols, establishing patterns now adopted across 12 engineering teams.</p>
+
+<p>One of my proudest achievements was leading a cross-functional team of 5 engineers to completely redesign our authentication and authorization system. This 6-month initiative reduced login failures by 75%, improved user satisfaction scores by 30%, and eliminated a class of security vulnerabilities that had been flagged in our annual audit. I personally designed the OAuth 2.0 integration layer and mentored two junior engineers who have since been promoted.</p>
+
+<p>My DevOps expertise has been equally impactful. I implemented a comprehensive CI/CD pipeline using GitHub Actions, ArgoCD, and Terraform that reduced deployment time from 4 hours to 15 minutes. This transformation enabled our team to increase release frequency from bi-weekly to multiple daily deployments, directly contributing to a 40% improvement in feature delivery velocity.</p>
+
+<p>I am particularly drawn to {{company}}'s engineering culture and the unprecedented scale at which your Cloud Platform operates. The opportunity to work on systems that serve millions of developers worldwide aligns perfectly with my career goal of building infrastructure that empowers others to create. My background in Python, cloud technologies, and distributed systems architecture makes me confident I can contribute from day one.</p>
+
+<p>I would welcome the opportunity to discuss in detail how my technical expertise, leadership experience, and passion for building reliable systems at scale can contribute to {{company}}'s continued innovation. Thank you sincerely for considering my application.</p>
+</div>
+
+<div class="letter-closing">Sincerely,</div>
+<div class="letter-signature">Alex Johnson</div>`,
+    wordCount: 352,
+    tone: 'Professional'
+  }
+};
+
+let currentStyle = 'ats';
+let isEditing = false;
+let hasGenerated = false;
+
+// Set active style tab
+function setStyle(tabEl) {
+  document.querySelectorAll('#styleTabs .tab').forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  currentStyle = tabEl.getAttribute('data-style');
+
+  // If already generated, update the letter content
+  if (hasGenerated) {
+    renderLetter(currentStyle);
+  }
+}
+
+// Generate letter
+function generateLetter() {
+  const company = document.getElementById('companyName').value.trim();
+  const title = document.getElementById('jobTitle').value.trim();
+
+  if (!company || !title) {
+    showToast('Please enter company name and job title', 'warning');
+    return;
+  }
+
+  // Show loading
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('active');
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  document.getElementById('generateBtnContent').innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px;border-color:rgba(255,255,255,0.3);border-top-color:white;"></span> Generating...';
+
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    btn.disabled = false;
+    document.getElementById('generateBtnContent').textContent = 'Regenerate Letter ✨';
+
+    hasGenerated = true;
+    renderLetter(currentStyle);
+
+    // Show letter content, hide empty state
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('letterContent').style.display = 'block';
+    document.getElementById('letterContent').style.animation = 'fadeInUp 0.6s ease-out';
+    document.getElementById('letterBadges').style.display = 'flex';
+    document.getElementById('previewSubtitle').textContent = 'AI-generated cover letter';
+
+    showToast('Cover letter generated successfully!', 'success');
+  }, 1500);
+}
+
+// Render letter content
+function renderLetter(style) {
+  const template = letterTemplates[style];
+  const company = document.getElementById('companyName').value.trim() || 'Google';
+  const title = document.getElementById('jobTitle').value.trim() || 'Senior Software Engineer';
+
+  let html = template.content
+    .replace(/\{\{company\}\}/g, company)
+    .replace(/\{\{title\}\}/g, title);
+
+  document.getElementById('letterText').innerHTML = html;
+  document.getElementById('wordCountBadge').textContent = template.wordCount + ' words';
+  document.getElementById('toneBadge').textContent = template.tone;
+
+  // Reset edit mode
+  if (isEditing) {
+    toggleEdit();
+  }
+}
+
+// Copy to clipboard
+function copyLetter() {
+  const letterCard = document.getElementById('letterCard');
+  const text = letterCard.innerText;
+
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById('copyBtnText').textContent = '✅ Copied!';
+    showToast('Cover letter copied to clipboard!', 'success');
+    setTimeout(() => {
+      document.getElementById('copyBtnText').textContent = '📋 Copy';
+    }, 2000);
+  }).catch(() => {
+    // Fallback
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    document.getElementById('copyBtnText').textContent = '✅ Copied!';
+    showToast('Cover letter copied to clipboard!', 'success');
+    setTimeout(() => {
+      document.getElementById('copyBtnText').textContent = '📋 Copy';
+    }, 2000);
+  });
+}
+
+// Download PDF (simulated)
+function downloadPDF() {
+  showToast('PDF download started! Check your downloads folder.', 'info');
+}
+
+// Regenerate
+function regenerateLetter() {
+  document.getElementById('regenerateBtnText').innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span> Regenerating...';
+
+  setTimeout(() => {
+    renderLetter(currentStyle);
+    document.getElementById('regenerateBtnText').textContent = '🔄 Regenerate';
+    showToast('Cover letter regenerated with fresh content!', 'success');
+
+    // Add subtle animation
+    const card = document.getElementById('letterCard');
+    card.style.animation = 'none';
+    card.offsetHeight; // trigger reflow
+    card.style.animation = 'fadeIn 0.5s ease-out';
+  }, 1200);
+}
+
+// Toggle edit mode
+function toggleEdit() {
+  const card = document.getElementById('letterCard');
+  const btn = document.getElementById('editBtn');
+
+  if (isEditing) {
+    card.removeAttribute('contenteditable');
+    btn.innerHTML = '✏️ Edit';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-secondary');
+    isEditing = false;
+    showToast('Edit mode disabled. Changes saved.', 'info');
+
+    // Update word count
+    const words = card.innerText.trim().split(/\s+/).length;
+    document.getElementById('wordCountBadge').textContent = words + ' words';
+  } else {
+    card.setAttribute('contenteditable', 'true');
+    card.focus();
+    btn.innerHTML = '💾 Save';
+    btn.classList.remove('btn-secondary');
+    btn.classList.add('btn-primary');
+    isEditing = true;
+    showToast('Edit mode enabled. Click inside the letter to make changes.', 'info');
+  }
+}
+
+// Accordion toggle
+function toggleAccordion(header) {
+  const item = header.parentElement;
+  const isOpen = item.classList.contains('open');
+
+  // Close all
+  document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('open'));
+
+  // Toggle clicked
+  if (!isOpen) {
+    item.classList.add('open');
+  }
+}
+
+// Toast notification
+function showToast(message, type) {
+  const container = document.getElementById('toastContainer');
+  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.innerHTML = '<span style="font-size:1.1rem">' + (icons[type] || 'ℹ️') + '</span><span style="font-size:var(--text-sm)">' + message + '</span>';
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = 'all 0.3s';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics & Insights — ResumeAI Pro</title>
+  <meta name="description" content="Track your resume performance, ATS scores, application stats, and career insights with ResumeAI Pro Analytics.">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* ── ATS Score Trend Chart ── */
+    .chart-container { position: relative; width: 100%; height: 300px; background: var(--bg-tertiary); border-radius: var(--radius-lg); padding: 1.5rem; overflow: hidden; }
+    .chart-grid { position: absolute; inset: 40px 40px 50px 50px; }
+    .chart-grid-line { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--border-secondary); }
+    .chart-y-label { position: absolute; left: 0; transform: translateY(-50%); font-size: 0.7rem; color: var(--text-muted); width: 40px; text-align: right; padding-right: 8px; }
+    .chart-x-label { position: absolute; bottom: 0; transform: translateX(-50%); font-size: 0.7rem; color: var(--text-muted); height: 40px; display: flex; align-items: flex-end; justify-content: center; }
+    .chart-area { position: absolute; inset: 40px 40px 50px 50px; }
+    .chart-svg { width: 100%; height: 100%; }
+    .chart-line { fill: none; stroke: var(--primary); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .chart-area-fill { fill: url(#areaGradient); opacity: 0.3; }
+    .chart-dot { fill: var(--primary); stroke: var(--bg-primary); stroke-width: 3; cursor: pointer; transition: r 0.2s ease; }
+    .chart-dot:hover { r: 7; }
+    .chart-tooltip { position: absolute; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); padding: 0.4rem 0.6rem; font-size: 0.7rem; pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap; box-shadow: var(--shadow-lg); z-index: 10; }
+
+    /* ── Donut Chart ── */
+    .donut-container { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .donut { width: 200px; height: 200px; border-radius: 50%; position: relative; }
+    .donut-hole { position: absolute; inset: 25%; border-radius: 50%; background: var(--bg-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .donut-hole .value { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); }
+    .donut-hole .label { font-size: 0.65rem; color: var(--text-muted); }
+    .donut-legend { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; justify-content: center; }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-secondary); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Bar Chart ── */
+    .bar-chart { display: flex; align-items: flex-end; gap: 0.6rem; height: 200px; padding-top: 1rem; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; height: 100%; justify-content: flex-end; }
+    .bar { width: 100%; border-radius: var(--radius-md) var(--radius-md) 0 0; background: linear-gradient(180deg, var(--primary), var(--primary-dark)); min-height: 4px; transition: transform 0.3s ease, opacity 0.3s ease; position: relative; }
+    .bar::after { content: attr(data-val); position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; font-weight: 700; color: var(--primary); opacity: 0; transition: opacity 0.2s; }
+    .bar:hover { transform: scaleY(1.05); }
+    .bar:hover::after { opacity: 1; }
+    .bar-label { font-size: 0.65rem; color: var(--text-muted); white-space: nowrap; }
+
+    /* ── Timeline ── */
+    .timeline { position: relative; padding-left: 2rem; }
+    .timeline::before { content: ''; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 2px; background: var(--border-primary); border-radius: 1px; }
+    .timeline-entry { position: relative; padding-bottom: 1.5rem; }
+    .timeline-entry:last-child { padding-bottom: 0; }
+    .timeline-dot { position: absolute; left: -2rem; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--primary); border: 3px solid var(--bg-secondary); z-index: 1; }
+    .timeline-date { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+    .timeline-score { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
+    .timeline-desc { font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.15rem; }
+
+    /* ── Insight Cards ── */
+    .insight-card { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); padding: 1.5rem; text-align: center; transition: transform 0.25s ease, box-shadow 0.25s ease; }
+    .insight-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .insight-emoji { font-size: 2.2rem; margin-bottom: 0.75rem; display: block; }
+    .insight-text { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+
+    /* ── Date Chips ── */
+    .date-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .date-chip { padding: 0.4rem 1rem; border-radius: var(--radius-full, 999px); font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border-primary); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; }
+    .date-chip:hover { border-color: var(--primary); color: var(--primary); }
+    .date-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  </style>
+</head>
+<body>
+
+<!-- ───── Sidebar ───── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header"><span style="font-size:1.5rem">🚀</span><span class="sidebar-logo text-gradient">ResumeAI Pro</span></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section"><div class="sidebar-section-title">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="builder.html" class="nav-item"><span class="nav-icon">📝</span> Resume Builder</a>
+      <a href="templates.html" class="nav-item"><span class="nav-icon">🎨</span> Templates</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Optimize</div>
+      <a href="ats-scorer.html" class="nav-item"><span class="nav-icon">📈</span> ATS Score</a>
+      <a href="jd-matcher.html" class="nav-item"><span class="nav-icon">🎯</span> JD Matcher</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-icon">✉️</span> Cover Letter</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Prepare</div>
+      <a href="interview.html" class="nav-item"><span class="nav-icon">🎤</span> Interview Prep</a>
+      <a href="career.html" class="nav-item"><span class="nav-icon">🗺️</span> Career Guide</a>
+      <a href="tracker.html" class="nav-item"><span class="nav-icon">📋</span> Job Tracker</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Insights</div>
+      <a href="analytics.html" class="nav-item active"><span class="nav-icon">📉</span> Analytics</a>
+      <a href="linkedin.html" class="nav-item"><span class="nav-icon">💼</span> LinkedIn</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">System</div>
+      <a href="admin.html" class="nav-item"><span class="nav-icon">⚙️</span> Admin Panel</a></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="flex items-center gap-3" style="margin-bottom:0.75rem"><div class="avatar" style="width:36px;height:36px;font-size:0.75rem">AJ</div><div><div class="font-semibold text-sm">Alex Johnson</div><span class="badge badge-primary" style="font-size:10px">PRO</span></div></div>
+    <button class="theme-toggle w-full" onclick="toggleTheme()" style="cursor:pointer"></button>
+  </div>
+</aside>
+
+<!-- ───── Main Content ───── -->
+<main class="main-content">
+
+  <!-- Header -->
+  <div class="content-header">
+    <div>
+      <h1 class="page-title">Analytics & Insights</h1>
+      <p class="page-subtitle">Track your resume performance and career progress</p>
+    </div>
+    <div class="date-chips">
+      <button class="date-chip" onclick="setDateChip(this)">Last 7 Days</button>
+      <button class="date-chip active" onclick="setDateChip(this)">30 Days</button>
+      <button class="date-chip" onclick="setDateChip(this)">90 Days</button>
+      <button class="date-chip" onclick="setDateChip(this)">1 Year</button>
+    </div>
+  </div>
+
+  <!-- ── Stats Row ── -->
+  <div class="grid grid-4" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+      <div class="stat-label">ATS Score</div>
+      <div class="stat-value">87</div>
+      <div class="stat-change positive">↑ +5 this month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Resumes Created</div>
+      <div class="stat-value">12</div>
+      <div class="stat-change neutral">Total all time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Applications Sent</div>
+      <div class="stat-value">48</div>
+      <div class="stat-change positive">↑ +8 this month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Interview Rate</div>
+      <div class="stat-value">32%</div>
+      <div class="stat-change positive">↑ Above average</div>
+    </div>
+  </div>
+
+  <!-- ── ATS Score Trend ── -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header">
+      <h2 class="card-title">📈 ATS Score Trend</h2>
+      <span class="badge badge-success">Improving</span>
+    </div>
+    <div class="chart-container" id="atsChart">
+      <!-- Y-Axis Labels -->
+      <div class="chart-y-label" style="top:40px;">100</div>
+      <div class="chart-y-label" style="top:calc(40px + (100% - 90px)*0.25);">75</div>
+      <div class="chart-y-label" style="top:calc(40px + (100% - 90px)*0.5);">50</div>
+      <div class="chart-y-label" style="top:calc(40px + (100% - 90px)*0.75);">25</div>
+      <div class="chart-y-label" style="bottom:50px;">0</div>
+
+      <!-- Grid Lines -->
+      <div class="chart-grid">
+        <div class="chart-grid-line" style="top:0%"></div>
+        <div class="chart-grid-line" style="top:25%"></div>
+        <div class="chart-grid-line" style="top:50%"></div>
+        <div class="chart-grid-line" style="top:75%"></div>
+        <div class="chart-grid-line" style="top:100%"></div>
+      </div>
+
+      <!-- X-Axis Labels -->
+      <div class="chart-x-label" style="left:calc(50px + (100% - 90px)*0/6);">Jan</div>
+      <div class="chart-x-label" style="left:calc(50px + (100% - 90px)*1/6);">Feb</div>
+      <div class="chart-x-label" style="left:calc(50px + (100% - 90px)*2/6);">Mar</div>
+      <div class="chart-x-label" style="left:calc(50px + (100% - 90px)*3/6);">Apr</div>
+      <div class="chart-x-label" style="left:calc(50px + (100% - 90px)*4/6);">May</div>
+      <div class="chart-x-label" style="left:calc(50px + (100% - 90px)*5/6);">Jun</div>
+      <div class="chart-x-label" style="left:calc(50px + (100% - 90px)*6/6);">Jul</div>
+
+      <!-- SVG Chart -->
+      <div class="chart-area">
+        <svg class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="var(--primary)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Area fill -->
+          <polygon class="chart-area-fill" points="0,70 100,56 200,64 300,50 400,40 500,30 600,26 600,200 0,200"/>
+          <!-- Line -->
+          <polyline class="chart-line" points="0,70 100,56 200,64 300,50 400,40 500,30 600,26"/>
+          <!-- Dots -->
+          <circle class="chart-dot" cx="0" cy="70" r="5" data-label="Jan" data-value="65"/>
+          <circle class="chart-dot" cx="100" cy="56" r="5" data-label="Feb" data-value="72"/>
+          <circle class="chart-dot" cx="200" cy="64" r="5" data-label="Mar" data-value="68"/>
+          <circle class="chart-dot" cx="300" cy="50" r="5" data-label="Apr" data-value="75"/>
+          <circle class="chart-dot" cx="400" cy="40" r="5" data-label="May" data-value="80"/>
+          <circle class="chart-dot" cx="500" cy="30" r="5" data-label="Jun" data-value="85"/>
+          <circle class="chart-dot" cx="600" cy="26" r="5" data-label="Jul" data-value="87"/>
+        </svg>
+      </div>
+      <div class="chart-tooltip" id="chartTooltip"></div>
+    </div>
+  </div>
+
+  <!-- ── Application Stats (Grid 2) ── -->
+  <div class="grid grid-2" style="margin-bottom:1.5rem;">
+
+    <!-- Donut Chart -->
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">📊 Application Status</h2></div>
+      <div class="donut-container" style="padding:1rem 0;">
+        <div class="donut" style="background: conic-gradient(var(--primary) 0% 48%, var(--accent, #f59e0b) 48% 68%, var(--success) 68% 76%, var(--text-muted) 76% 100%);">
+          <div class="donut-hole">
+            <div class="value">48</div>
+            <div class="label">Total Apps</div>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:var(--primary)"></span> Applied (48%)</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--accent, #f59e0b)"></span> Interviewing (20%)</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--success)"></span> Offer (8%)</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--text-muted)"></span> Rejected (24%)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">📋 Weekly Applications</h2></div>
+      <div style="padding:1rem 0;">
+        <div class="bar-chart">
+          <div class="bar-col"><div class="bar" style="height:30%;" data-val="3"></div><div class="bar-label">Wk 1</div></div>
+          <div class="bar-col"><div class="bar" style="height:50%;" data-val="5"></div><div class="bar-label">Wk 2</div></div>
+          <div class="bar-col"><div class="bar" style="height:70%;" data-val="7"></div><div class="bar-label">Wk 3</div></div>
+          <div class="bar-col"><div class="bar" style="height:40%;" data-val="4"></div><div class="bar-label">Wk 4</div></div>
+          <div class="bar-col"><div class="bar" style="height:60%;" data-val="6"></div><div class="bar-label">Wk 5</div></div>
+          <div class="bar-col"><div class="bar" style="height:80%;" data-val="8"></div><div class="bar-label">Wk 6</div></div>
+          <div class="bar-col"><div class="bar" style="height:50%;" data-val="5"></div><div class="bar-label">Wk 7</div></div>
+          <div class="bar-col"><div class="bar" style="height:100%;" data-val="10"></div><div class="bar-label">Wk 8</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Resume Improvement Timeline ── -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h2 class="card-title">🕐 Resume Improvement Timeline</h2></div>
+    <div class="timeline">
+      <div class="timeline-entry">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">June 28, 2026</div>
+        <div class="timeline-score">Score: 82 → 87</div>
+        <div class="timeline-desc">Added quantified achievements to experience section and optimized keyword density for target roles.</div>
+      </div>
+      <div class="timeline-entry">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">June 10, 2026</div>
+        <div class="timeline-score">Score: 78 → 82</div>
+        <div class="timeline-desc">Improved summary section with stronger action verbs and industry-specific terminology.</div>
+      </div>
+      <div class="timeline-entry">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">May 22, 2026</div>
+        <div class="timeline-score">Score: 72 → 78</div>
+        <div class="timeline-desc">Restructured skills section to match ATS parsing patterns and added relevant certifications.</div>
+      </div>
+      <div class="timeline-entry">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">April 15, 2026</div>
+        <div class="timeline-score">Score: 68 → 72</div>
+        <div class="timeline-desc">Fixed formatting issues that were causing ATS parsing errors. Switched to single-column layout.</div>
+      </div>
+      <div class="timeline-entry">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">March 5, 2026</div>
+        <div class="timeline-score">Score: 60 → 68</div>
+        <div class="timeline-desc">Initial optimization pass — removed graphics, tables, and headers/footers incompatible with ATS systems.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Insights Cards ── -->
+  <div class="grid grid-3">
+    <div class="insight-card">
+      <span class="insight-emoji">🏆</span>
+      <div class="insight-text">Top 15% for ATS optimization among all users</div>
+    </div>
+    <div class="insight-card">
+      <span class="insight-emoji">📊</span>
+      <div class="insight-text">Keyword match improved by 40% over last quarter</div>
+    </div>
+    <div class="insight-card">
+      <span class="insight-emoji">🚀</span>
+      <div class="insight-text">Interview rate is 2x the platform average</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ───── Copilot Widget ───── -->
+<div class="copilot-widget"><button class="copilot-btn" onclick="document.getElementById('copilotPanel').classList.toggle('open')">✨</button><div class="copilot-panel" id="copilotPanel"><div class="copilot-header"><span style="font-size:1.2rem">🤖</span><div style="flex:1"><div class="font-semibold" style="font-size:0.9rem">AI Copilot</div><div style="font-size:0.65rem;opacity:0.8">● Online</div></div><button onclick="document.getElementById('copilotPanel').classList.remove('open')" style="background:none;border:none;color:white;cursor:pointer">✕</button></div><div class="copilot-messages" id="copilotMessages"><div class="copilot-msg ai">Hi! 👋 How can I help?</div></div><div class="copilot-input-area"><input class="copilot-input" id="copilotInput" placeholder="Ask anything..." onkeydown="if(event.key==='Enter')sendMsg()"><button class="copilot-send" onclick="sendMsg()">→</button></div></div></div>
+
+<!-- ───── Scripts ───── -->
+<script>
+function toggleTheme(){const h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();
+const aiR=['Great insight!','I can help with that.','Here are my recommendations.','Let me look into that for you.'];let aI=0;
+function sendMsg(){const i=document.getElementById('copilotInput'),m=i.value.trim();if(!m)return;const c=document.getElementById('copilotMessages');c.innerHTML+='<div class="copilot-msg user">'+m+'</div>';i.value='';c.scrollTop=c.scrollHeight;setTimeout(()=>{c.innerHTML+='<div class="copilot-msg ai">'+aiR[aI++%aiR.length]+'</div>';c.scrollTop=c.scrollHeight},1000)}
+
+/* Date chip toggle */
+function setDateChip(btn){document.querySelectorAll('.date-chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');}
+
+/* Chart tooltip */
+document.querySelectorAll('.chart-dot').forEach(dot=>{
+  dot.addEventListener('mouseenter',function(e){
+    const tt=document.getElementById('chartTooltip');
+    const label=this.getAttribute('data-label');
+    const value=this.getAttribute('data-value');
+    tt.textContent=label+': '+value;
+    const rect=document.getElementById('atsChart').getBoundingClientRect();
+    const svgRect=this.closest('svg').getBoundingClientRect();
+    const cx=parseFloat(this.getAttribute('cx'));
+    const cy=parseFloat(this.getAttribute('cy'));
+    const xRatio=cx/600;
+    const yRatio=cy/200;
+    tt.style.left=(svgRect.left-rect.left+svgRect.width*xRatio)+'px';
+    tt.style.top=(svgRect.top-rect.top+svgRect.height*yRatio-30)+'px';
+    tt.style.opacity='1';
+  });
+  dot.addEventListener('mouseleave',function(){
+    document.getElementById('chartTooltip').style.opacity='0';
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Builder – ResumeAI Pro</title>
+<link rel="stylesheet" href="css/main.css">
+<style>
+.builder-layout { display: flex; height: calc(100vh - var(--header-height)); overflow: hidden; }
+.editor-pane { width: 50%; overflow-y: auto; padding: 1.5rem; border-right: 1px solid var(--border-primary); }
+.preview-pane { width: 50%; overflow-y: auto; padding: 1.5rem; background: var(--bg-tertiary); display: flex; flex-direction: column; align-items: center; }
+
+/* Toolbar */
+.builder-toolbar { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1.5rem; border-bottom: 1px solid var(--border-primary); background: var(--bg-secondary); flex-wrap: wrap; }
+.toolbar-group { display: flex; align-items: center; gap: 0.5rem; }
+.toolbar-sep { width: 1px; height: 24px; background: var(--border-primary); }
+.save-indicator { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--success-500); }
+.save-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success-500); }
+.ats-badge-mini { display: flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; background: rgba(16,185,129,0.1); border-radius: 100px; font-size: 0.75rem; font-weight: 700; color: var(--success-500); }
+
+/* Section Card */
+.section-card { background: var(--surface-card); border: 1px solid var(--border-primary); border-radius: var(--radius-xl); margin-bottom: 1rem; transition: all 0.2s; }
+.section-card.dragging { opacity: 0.5; border-style: dashed; }
+.section-card.drag-over { border-color: var(--primary-500); box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
+.section-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; cursor: pointer; user-select: none; }
+.drag-grip { color: var(--text-tertiary); cursor: grab; font-size: 1rem; padding: 0.25rem; letter-spacing: 2px; }
+.drag-grip:active { cursor: grabbing; }
+.section-title-text { flex: 1; font-weight: 600; font-size: 0.9rem; }
+.section-actions { display: flex; align-items: center; gap: 0.25rem; }
+.section-btn { background: none; border: none; cursor: pointer; padding: 0.3rem; font-size: 0.85rem; border-radius: var(--radius-sm); transition: all 0.15s; color: var(--text-tertiary); }
+.section-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.section-btn.ai-btn { color: var(--primary-500); }
+.section-btn.ai-btn:hover { background: rgba(99,102,241,0.1); }
+.section-body { padding: 0 1rem 1rem; display: none; }
+.section-card.open .section-body { display: block; }
+.section-card.open .chevron { transform: rotate(180deg); }
+.chevron { transition: transform 0.2s; font-size: 0.7rem; }
+
+/* Form */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+.form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.form-group label { font-size: 0.75rem; font-weight: 500; color: var(--text-tertiary); }
+.form-group input, .form-group textarea, .form-group select { font-size: 0.8rem; padding: 0.5rem 0.75rem; }
+.entry-card { border: 1px solid var(--border-secondary); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 0.75rem; background: var(--bg-secondary); }
+.entry-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+.entry-title { font-weight: 600; font-size: 0.85rem; }
+.add-entry-btn { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; background: none; border: 1px dashed var(--border-primary); border-radius: var(--radius-md); cursor: pointer; color: var(--text-tertiary); font-size: 0.8rem; width: 100%; justify-content: center; transition: all 0.2s; }
+.add-entry-btn:hover { border-color: var(--primary-400); color: var(--primary-400); background: rgba(99,102,241,0.03); }
+
+/* Skills Tags */
+.skills-container { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.5rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--surface-input); min-height: 44px; cursor: text; }
+.skill-tag { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; background: var(--primary-100); color: var(--primary-700); border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 500; }
+[data-theme="dark"] .skill-tag { background: rgba(99,102,241,0.15); color: var(--primary-300); }
+.skill-remove { cursor: pointer; font-size: 0.85rem; opacity: 0.6; line-height: 1; }
+.skill-remove:hover { opacity: 1; }
+.skill-input { border: none; outline: none; background: transparent; font-size: 0.8rem; min-width: 100px; flex: 1; color: var(--text-primary); }
+
+/* Preview */
+.preview-container { width: 100%; max-width: 595px; }
+.preview-controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; width: 100%; max-width: 595px; }
+.zoom-btns { display: flex; gap: 0.25rem; }
+.zoom-btn { padding: 0.25rem 0.6rem; font-size: 0.7rem; border: 1px solid var(--border-primary); background: var(--surface-card); color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; }
+.zoom-btn.active { background: var(--primary-500); color: white; border-color: var(--primary-500); }
+.resume-page { background: white; box-shadow: 0 4px 30px rgba(0,0,0,0.15); border-radius: 4px; padding: 40px 45px; min-height: 842px; color: #1a1a2e; font-family: 'Inter', sans-serif; transform-origin: top center; transition: transform 0.2s; }
+.resume-page * { color: #1a1a2e; }
+.rp-name { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 2px; letter-spacing: -0.01em; }
+.rp-title { font-size: 11px; text-align: center; color: #6b7280; margin-bottom: 6px; }
+.rp-contact { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; font-size: 9px; color: #6b7280; margin-bottom: 12px; }
+.rp-contact a { color: #4f46e5; text-decoration: none; }
+.rp-hr { height: 1.5px; background: #e5e7eb; margin: 8px 0; }
+.rp-section { margin-bottom: 10px; }
+.rp-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #4f46e5; border-bottom: 1.5px solid #e5e7eb; padding-bottom: 3px; margin-bottom: 8px; }
+.rp-exp-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+.rp-company { font-size: 11px; font-weight: 700; }
+.rp-role { font-size: 10px; font-style: italic; color: #374151; }
+.rp-date { font-size: 9px; color: #6b7280; }
+.rp-bullets { padding-left: 16px; margin: 4px 0 8px; }
+.rp-bullets li { font-size: 9.5px; line-height: 1.5; margin-bottom: 2px; color: #374151; }
+.rp-skills-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.rp-skill { padding: 1px 8px; background: #eef2ff; color: #4f46e5; border-radius: 3px; font-size: 9px; font-weight: 500; }
+.rp-text { font-size: 9.5px; line-height: 1.6; color: #374151; }
+.rp-edu-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+.rp-cert-row { display: flex; justify-content: space-between; font-size: 9.5px; margin-bottom: 4px; }
+.rp-lang-row { font-size: 9.5px; margin-bottom: 3px; }
+
+/* Loading spinner for AI */
+.ai-loading { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--primary-500); }
+.ai-spinner { width: 14px; height: 14px; border: 2px solid var(--border-primary); border-top-color: var(--primary-500); border-radius: 50%; animation: spin 0.6s linear infinite; }
+
+/* Add Section Dropdown */
+.add-section-dropdown { position: relative; }
+.add-section-menu { position: absolute; bottom: calc(100% + 0.5rem); left: 0; background: var(--bg-elevated); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); padding: 0.5rem; min-width: 220px; display: none; z-index: 100; }
+.add-section-menu.open { display: block; }
+.add-section-item { padding: 0.5rem 0.75rem; font-size: 0.8rem; cursor: pointer; border-radius: var(--radius-md); color: var(--text-secondary); transition: all 0.15s; }
+.add-section-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+@media (max-width: 900px) {
+  .builder-layout { flex-direction: column; }
+  .editor-pane, .preview-pane { width: 100%; }
+  .editor-pane { max-height: 50vh; }
+  .preview-pane { max-height: 50vh; }
+  .form-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header"><span style="font-size:1.5rem">🚀</span><span class="sidebar-logo text-gradient">ResumeAI Pro</span></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section"><div class="sidebar-section-title">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="builder.html" class="nav-item active"><span class="nav-icon">📝</span> Resume Builder</a>
+      <a href="templates.html" class="nav-item"><span class="nav-icon">🎨</span> Templates</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Optimize</div>
+      <a href="ats-scorer.html" class="nav-item"><span class="nav-icon">📈</span> ATS Score</a>
+      <a href="jd-matcher.html" class="nav-item"><span class="nav-icon">🎯</span> JD Matcher</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-icon">✉️</span> Cover Letter</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Prepare</div>
+      <a href="interview.html" class="nav-item"><span class="nav-icon">🎤</span> Interview Prep</a>
+      <a href="career.html" class="nav-item"><span class="nav-icon">🗺️</span> Career Guide</a>
+      <a href="tracker.html" class="nav-item"><span class="nav-icon">📋</span> Job Tracker</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Insights</div>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📉</span> Analytics</a>
+      <a href="linkedin.html" class="nav-item"><span class="nav-icon">💼</span> LinkedIn</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">System</div>
+      <a href="admin.html" class="nav-item"><span class="nav-icon">⚙️</span> Admin Panel</a></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="flex items-center gap-3" style="margin-bottom:0.75rem"><div class="avatar" style="width:36px;height:36px;font-size:0.75rem">AJ</div><div><div class="font-semibold text-sm">Alex Johnson</div><span class="badge badge-primary" style="font-size:10px">PRO</span></div></div>
+    <button class="theme-toggle w-full" onclick="toggleTheme()" style="cursor:pointer"></button>
+  </div>
+</aside>
+
+<div class="main-content">
+  <!-- Toolbar -->
+  <div class="builder-toolbar">
+    <div class="toolbar-group">
+      <select class="select" style="font-size:0.8rem;padding:0.4rem 2rem 0.4rem 0.6rem" id="templateSelect">
+        <option>Classic Professional</option>
+        <option>Modern Minimal</option>
+        <option>Executive Bold</option>
+        <option>Tech Stack</option>
+      </select>
+    </div>
+    <div class="toolbar-sep"></div>
+    <div class="save-indicator" id="saveIndicator"><div class="save-dot"></div> All changes saved</div>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-group">
+      <button class="btn btn-ghost btn-sm" title="Undo" onclick="undo()">↩️</button>
+      <button class="btn btn-ghost btn-sm" title="Redo" onclick="redo()">↪️</button>
+    </div>
+    <div class="toolbar-sep"></div>
+    <div class="toolbar-group" style="margin-left:auto">
+      <div class="ats-badge-mini">📊 87</div>
+      <div class="dropdown">
+        <button class="btn btn-primary btn-sm" onclick="this.parentElement.classList.toggle('active')">⬇ Download</button>
+        <div class="dropdown-menu">
+          <button class="dropdown-item" onclick="alert('PDF download simulated!')">📄 PDF</button>
+          <button class="dropdown-item" onclick="alert('DOCX download simulated!')">📝 DOCX</button>
+          <button class="dropdown-item" onclick="alert('TXT download simulated!')">📋 TXT</button>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm">🔗 Share</button>
+    </div>
+  </div>
+
+  <!-- Builder Layout -->
+  <div class="builder-layout">
+    <!-- Editor Pane -->
+    <div class="editor-pane" id="editorPane">
+
+      <!-- Personal Info -->
+      <div class="section-card open" draggable="true" data-section="personal">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="drag-grip" draggable="false">⠿</span>
+          <span class="section-title-text">Personal Information</span>
+          <div class="section-actions">
+            <button class="section-btn ai-btn" onclick="event.stopPropagation();aiGenerate('personal')" title="AI Generate">✨</button>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="form-row">
+            <div class="form-group"><label>Full Name</label><input class="input" data-field="name" value="Alex Johnson" oninput="updatePreview()"></div>
+            <div class="form-group"><label>Job Title</label><input class="input" data-field="title" value="Senior Software Engineer" oninput="updatePreview()"></div>
+          </div>
+          <div class="form-row cols-3">
+            <div class="form-group"><label>Email</label><input class="input" data-field="email" value="alex.johnson@email.com" oninput="updatePreview()"></div>
+            <div class="form-group"><label>Phone</label><input class="input" data-field="phone" value="+1 (555) 123-4567" oninput="updatePreview()"></div>
+            <div class="form-group"><label>Location</label><input class="input" data-field="location" value="San Francisco, CA" oninput="updatePreview()"></div>
+          </div>
+          <div class="form-row cols-3">
+            <div class="form-group"><label>LinkedIn</label><input class="input" data-field="linkedin" value="linkedin.com/in/alexjohnson" oninput="updatePreview()"></div>
+            <div class="form-group"><label>GitHub</label><input class="input" data-field="github" value="github.com/alexjohnson" oninput="updatePreview()"></div>
+            <div class="form-group"><label>Portfolio</label><input class="input" data-field="portfolio" value="alexjohnson.dev" oninput="updatePreview()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="section-card open" draggable="true" data-section="summary">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="drag-grip">⠿</span>
+          <span class="section-title-text">Professional Summary</span>
+          <div class="section-actions">
+            <button class="section-btn ai-btn" onclick="event.stopPropagation();aiRewriteSummary()" title="AI Rewrite">✨</button>
+            <button class="section-btn" onclick="event.stopPropagation();removeSection(this)" title="Remove">🗑️</button>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="section-body">
+          <textarea class="textarea" id="summaryText" rows="4" oninput="updatePreview()" style="font-size:0.8rem">Results-driven Senior Software Engineer with 6+ years of experience building scalable web applications and distributed systems. Proficient in Python, JavaScript, React, and cloud technologies. Led teams of 5-8 engineers, delivering projects that increased user engagement by 40% and reduced system latency by 60%. Passionate about clean code, mentoring, and driving technical excellence.</textarea>
+          <button class="btn btn-ghost btn-sm mt-2" onclick="aiRewriteSummary()">✨ AI Rewrite</button>
+        </div>
+      </div>
+
+      <!-- Experience -->
+      <div class="section-card open" draggable="true" data-section="experience">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="drag-grip">⠿</span>
+          <span class="section-title-text">Experience</span>
+          <div class="section-actions">
+            <button class="section-btn ai-btn" onclick="event.stopPropagation();aiGenerate('experience')" title="AI Generate">✨</button>
+            <button class="section-btn" onclick="event.stopPropagation();removeSection(this)" title="Remove">🗑️</button>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="section-body" id="experienceBody">
+          <div class="entry-card">
+            <div class="entry-header"><span class="entry-title">Experience #1</span><button class="section-btn" onclick="this.closest('.entry-card').remove();updatePreview()">🗑️</button></div>
+            <div class="form-row"><div class="form-group"><label>Company</label><input class="input exp-company" value="TechCorp Inc." oninput="updatePreview()"></div><div class="form-group"><label>Title</label><input class="input exp-title" value="Senior Software Engineer" oninput="updatePreview()"></div></div>
+            <div class="form-row"><div class="form-group"><label>Start Date</label><input class="input exp-start" value="Jan 2021" oninput="updatePreview()"></div><div class="form-group"><label>End Date</label><input class="input exp-end" value="Present" oninput="updatePreview()"></div></div>
+            <div class="form-group"><label>Description (one bullet per line)</label><textarea class="textarea exp-desc" rows="5" oninput="updatePreview()" style="font-size:0.8rem">Architected and deployed microservices handling 10M+ daily requests using Python, FastAPI, and Kubernetes
+Led a team of 5 engineers in redesigning the authentication system, reducing login failures by 75%
+Implemented CI/CD pipelines that decreased deployment time from 4 hours to 15 minutes
+Mentored 3 junior developers, helping them achieve promotion within 12 months</textarea></div>
+          </div>
+          <div class="entry-card">
+            <div class="entry-header"><span class="entry-title">Experience #2</span><button class="section-btn" onclick="this.closest('.entry-card').remove();updatePreview()">🗑️</button></div>
+            <div class="form-row"><div class="form-group"><label>Company</label><input class="input exp-company" value="StartupXYZ" oninput="updatePreview()"></div><div class="form-group"><label>Title</label><input class="input exp-title" value="Software Engineer" oninput="updatePreview()"></div></div>
+            <div class="form-row"><div class="form-group"><label>Start Date</label><input class="input exp-start" value="Jun 2018" oninput="updatePreview()"></div><div class="form-group"><label>End Date</label><input class="input exp-end" value="Dec 2020" oninput="updatePreview()"></div></div>
+            <div class="form-group"><label>Description (one bullet per line)</label><textarea class="textarea exp-desc" rows="4" oninput="updatePreview()" style="font-size:0.8rem">Built and maintained 15+ RESTful APIs serving 2M+ monthly active users using Node.js and Express
+Developed responsive React front-end components, improving page load times by 45%
+Designed and optimized PostgreSQL database schemas, reducing query execution time by 60%</textarea></div>
+          </div>
+          <button class="add-entry-btn" onclick="addExperience()">+ Add Experience</button>
+        </div>
+      </div>
+
+      <!-- Education -->
+      <div class="section-card open" draggable="true" data-section="education">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="drag-grip">⠿</span>
+          <span class="section-title-text">Education</span>
+          <div class="section-actions">
+            <button class="section-btn" onclick="event.stopPropagation();removeSection(this)" title="Remove">🗑️</button>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="section-body" id="educationBody">
+          <div class="entry-card">
+            <div class="form-row"><div class="form-group"><label>Institution</label><input class="input edu-school" value="Stanford University" oninput="updatePreview()"></div><div class="form-group"><label>Degree</label><input class="input edu-degree" value="Master of Science" oninput="updatePreview()"></div></div>
+            <div class="form-row cols-3"><div class="form-group"><label>Field</label><input class="input edu-field" value="Computer Science" oninput="updatePreview()"></div><div class="form-group"><label>GPA</label><input class="input edu-gpa" value="3.85 / 4.0" oninput="updatePreview()"></div><div class="form-group"><label>Years</label><input class="input edu-years" value="2016 – 2018" oninput="updatePreview()"></div></div>
+          </div>
+          <button class="add-entry-btn" onclick="addEducation()">+ Add Education</button>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="section-card open" draggable="true" data-section="skills">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="drag-grip">⠿</span>
+          <span class="section-title-text">Skills</span>
+          <div class="section-actions">
+            <button class="section-btn ai-btn" onclick="event.stopPropagation();aiSuggestSkills()" title="AI Suggest">✨</button>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="skills-container" id="skillsContainer" onclick="document.getElementById('skillInput').focus()">
+            <input type="text" class="skill-input" id="skillInput" placeholder="Type a skill and press Enter..." onkeydown="handleSkillInput(event)">
+          </div>
+          <button class="btn btn-ghost btn-sm mt-2" onclick="aiSuggestSkills()">✨ AI Suggest Skills</button>
+        </div>
+      </div>
+
+      <!-- Projects -->
+      <div class="section-card open" draggable="true" data-section="projects">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="drag-grip">⠿</span>
+          <span class="section-title-text">Projects</span>
+          <div class="section-actions">
+            <button class="section-btn ai-btn" onclick="event.stopPropagation();aiGenerate('projects')" title="AI Generate">✨</button>
+            <button class="section-btn" onclick="event.stopPropagation();removeSection(this)" title="Remove">🗑️</button>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="section-body" id="projectsBody">
+          <div class="entry-card">
+            <div class="form-row"><div class="form-group"><label>Project Name</label><input class="input proj-name" value="AI Resume Optimizer" oninput="updatePreview()"></div><div class="form-group"><label>Technologies</label><input class="input proj-tech" value="Python, React, OpenAI API, PostgreSQL" oninput="updatePreview()"></div></div>
+            <div class="form-group"><label>Description</label><textarea class="textarea proj-desc" rows="2" oninput="updatePreview()" style="font-size:0.8rem">Built an AI-powered resume optimization platform using GPT-4 and React. Implemented NLP-based keyword extraction and ATS scoring algorithms. Achieved 95% accuracy in resume parsing across 10K+ documents.</textarea></div>
+          </div>
+          <div class="entry-card">
+            <div class="form-row"><div class="form-group"><label>Project Name</label><input class="input proj-name" value="Real-time Analytics Dashboard" oninput="updatePreview()"></div><div class="form-group"><label>Technologies</label><input class="input proj-tech" value="Kafka, Apache Spark, D3.js, AWS" oninput="updatePreview()"></div></div>
+            <div class="form-group"><label>Description</label><textarea class="textarea proj-desc" rows="2" oninput="updatePreview()" style="font-size:0.8rem">Developed a real-time analytics dashboard processing 1M+ events/day using Kafka and Spark. Built interactive D3.js visualizations. Reduced data processing latency by 80%.</textarea></div>
+          </div>
+          <button class="add-entry-btn" onclick="addProject()">+ Add Project</button>
+        </div>
+      </div>
+
+      <!-- Certifications -->
+      <div class="section-card open" draggable="true" data-section="certifications">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="drag-grip">⠿</span>
+          <span class="section-title-text">Certifications</span>
+          <div class="section-actions">
+            <button class="section-btn" onclick="event.stopPropagation();removeSection(this)">🗑️</button>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="section-body" id="certsBody">
+          <div class="entry-card">
+            <div class="form-row cols-3"><div class="form-group"><label>Certification</label><input class="input cert-name" value="AWS Solutions Architect – Professional" oninput="updatePreview()"></div><div class="form-group"><label>Issuer</label><input class="input cert-issuer" value="Amazon Web Services" oninput="updatePreview()"></div><div class="form-group"><label>Date</label><input class="input cert-date" value="March 2023" oninput="updatePreview()"></div></div>
+          </div>
+          <button class="add-entry-btn" onclick="addCert()">+ Add Certification</button>
+        </div>
+      </div>
+
+      <!-- Languages -->
+      <div class="section-card open" draggable="true" data-section="languages">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="drag-grip">⠿</span>
+          <span class="section-title-text">Languages</span>
+          <div class="section-actions">
+            <button class="section-btn" onclick="event.stopPropagation();removeSection(this)">🗑️</button>
+            <span class="chevron">▼</span>
+          </div>
+        </div>
+        <div class="section-body" id="langsBody">
+          <div class="entry-card">
+            <div class="form-row"><div class="form-group"><label>Language</label><input class="input lang-name" value="English" oninput="updatePreview()"></div><div class="form-group"><label>Proficiency</label><input class="input lang-level" value="Native" oninput="updatePreview()"></div></div>
+          </div>
+          <div class="entry-card">
+            <div class="form-row"><div class="form-group"><label>Language</label><input class="input lang-name" value="Spanish" oninput="updatePreview()"></div><div class="form-group"><label>Proficiency</label><input class="input lang-level" value="Professional Working" oninput="updatePreview()"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Section -->
+      <div class="add-section-dropdown" style="margin-top:0.5rem">
+        <button class="btn btn-secondary w-full" onclick="document.getElementById('addSectionMenu').classList.toggle('open')">+ Add Section</button>
+        <div class="add-section-menu" id="addSectionMenu">
+          <div class="add-section-item" onclick="addNewSection('achievements')">🏆 Achievements</div>
+          <div class="add-section-item" onclick="addNewSection('awards')">🥇 Awards</div>
+          <div class="add-section-item" onclick="addNewSection('volunteer')">🤝 Volunteer Work</div>
+          <div class="add-section-item" onclick="addNewSection('publications')">📚 Publications</div>
+          <div class="add-section-item" onclick="addNewSection('research')">🔬 Research Papers</div>
+          <div class="add-section-item" onclick="addNewSection('hobbies')">🎯 Hobbies & Interests</div>
+          <div class="add-section-item" onclick="addNewSection('references')">📋 References</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Pane -->
+    <div class="preview-pane">
+      <div class="preview-controls">
+        <div class="zoom-btns">
+          <button class="zoom-btn" onclick="setZoom(0.75)">75%</button>
+          <button class="zoom-btn active" onclick="setZoom(1)">100%</button>
+          <button class="zoom-btn" onclick="setZoom(1.15)">115%</button>
+        </div>
+        <span class="text-xs text-tertiary">Page 1 of 1</span>
+      </div>
+      <div class="preview-container">
+        <div class="resume-page" id="resumePreview"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Copilot -->
+<div class="copilot-widget"><button class="copilot-btn" onclick="document.getElementById('copilotPanel').classList.toggle('open')">✨</button><div class="copilot-panel" id="copilotPanel"><div class="copilot-header"><span style="font-size:1.2rem">🤖</span><div style="flex:1"><div class="font-semibold" style="font-size:0.9rem">AI Career Copilot</div><div style="font-size:0.65rem;opacity:0.8">● Online</div></div><button onclick="document.getElementById('copilotPanel').classList.remove('open')" style="background:none;border:none;color:white;cursor:pointer;font-size:1.1rem">✕</button></div><div class="copilot-messages" id="copilotMessages"><div class="copilot-msg ai">Hi! 👋 I can help optimize your resume. Try asking me to improve a section!</div></div><div class="copilot-input-area"><input class="copilot-input" id="copilotInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendMsg()"><button class="copilot-send" onclick="sendMsg()">→</button></div></div></div>
+
+<script>
+// ── Theme ──
+function toggleTheme(){const h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}
+(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();
+
+// ── Skills ──
+const initialSkills = ['Python','JavaScript','TypeScript','React','Node.js','FastAPI','PostgreSQL','MongoDB','AWS','Docker','Kubernetes','Git','CI/CD','GraphQL','Redis'];
+let skills = [...initialSkills];
+
+function renderSkills() {
+  const container = document.getElementById('skillsContainer');
+  const input = document.getElementById('skillInput');
+  container.querySelectorAll('.skill-tag').forEach(t => t.remove());
+  skills.forEach((s, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'skill-tag';
+    tag.innerHTML = `${s}<span class="skill-remove" onclick="removeSkill(${i})">×</span>`;
+    container.insertBefore(tag, input);
+  });
+  updatePreview();
+}
+
+function handleSkillInput(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(',','');
+    if (val && !skills.includes(val)) { skills.push(val); e.target.value = ''; renderSkills(); }
+  }
+  if (e.key === 'Backspace' && !e.target.value && skills.length) { skills.pop(); renderSkills(); }
+}
+
+function removeSkill(i) { skills.splice(i, 1); renderSkills(); }
+renderSkills();
+
+// ── Section Toggle ──
+function toggleSection(header) {
+  header.closest('.section-card').classList.toggle('open');
+}
+
+function removeSection(btn) {
+  if (confirm('Remove this section?')) { btn.closest('.section-card').remove(); updatePreview(); }
+}
+
+// ── Drag and Drop ──
+let draggedEl = null;
+document.querySelectorAll('.section-card').forEach(card => {
+  card.addEventListener('dragstart', e => { draggedEl = card; card.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+  card.addEventListener('dragend', () => { draggedEl.classList.remove('dragging'); document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); draggedEl = null; });
+  card.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (card !== draggedEl) card.classList.add('drag-over'); });
+  card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+  card.addEventListener('drop', e => {
+    e.preventDefault(); card.classList.remove('drag-over');
+    if (draggedEl && card !== draggedEl) {
+      const parent = card.parentNode;
+      const cards = [...parent.querySelectorAll('.section-card')];
+      const dragIdx = cards.indexOf(draggedEl);
+      const dropIdx = cards.indexOf(card);
+      if (dragIdx < dropIdx) card.after(draggedEl); else card.before(draggedEl);
+      updatePreview();
+    }
+  });
+});
+
+// ── Preview Rendering ──
+function updatePreview() {
+  const preview = document.getElementById('resumePreview');
+  const sections = document.querySelectorAll('#editorPane .section-card');
+  let html = '';
+
+  sections.forEach(sec => {
+    const type = sec.dataset.section;
+    if (type === 'personal') {
+      const g = f => (sec.querySelector(`[data-field="${f}"]`)?.value || '');
+      html += `<div class="rp-name">${g('name')}</div>`;
+      html += `<div class="rp-title">${g('title')}</div>`;
+      const contacts = [g('email'), g('phone'), g('location'), g('linkedin'), g('github'), g('portfolio')].filter(Boolean);
+      html += `<div class="rp-contact">${contacts.join(' · ')}</div>`;
+      html += '<div class="rp-hr"></div>';
+    }
+    else if (type === 'summary') {
+      const text = document.getElementById('summaryText')?.value || '';
+      if (text.trim()) { html += `<div class="rp-section"><div class="rp-section-title">Professional Summary</div><div class="rp-text">${text}</div></div>`; }
+    }
+    else if (type === 'experience') {
+      const entries = sec.querySelectorAll('.entry-card');
+      if (entries.length) {
+        html += '<div class="rp-section"><div class="rp-section-title">Experience</div>';
+        entries.forEach(e => {
+          const company = e.querySelector('.exp-company')?.value || '';
+          const title = e.querySelector('.exp-title')?.value || '';
+          const start = e.querySelector('.exp-start')?.value || '';
+          const end = e.querySelector('.exp-end')?.value || '';
+          const desc = e.querySelector('.exp-desc')?.value || '';
+          html += `<div class="rp-exp-header"><div><span class="rp-company">${company}</span> <span class="rp-role">— ${title}</span></div><span class="rp-date">${start} – ${end}</span></div>`;
+          const bullets = desc.split('\n').filter(l => l.trim());
+          if (bullets.length) { html += '<ul class="rp-bullets">'; bullets.forEach(b => html += `<li>${b.trim()}</li>`); html += '</ul>'; }
+        });
+        html += '</div>';
+      }
+    }
+    else if (type === 'education') {
+      const entries = sec.querySelectorAll('.entry-card');
+      if (entries.length) {
+        html += '<div class="rp-section"><div class="rp-section-title">Education</div>';
+        entries.forEach(e => {
+          html += `<div class="rp-edu-row"><div><span class="rp-company">${e.querySelector('.edu-school')?.value||''}</span> — <span class="rp-role">${e.querySelector('.edu-degree')?.value||''} in ${e.querySelector('.edu-field')?.value||''}</span></div><span class="rp-date">${e.querySelector('.edu-years')?.value||''}</span></div>`;
+          const gpa = e.querySelector('.edu-gpa')?.value;
+          if (gpa) html += `<div style="font-size:9px;color:#6b7280;margin-bottom:6px">GPA: ${gpa}</div>`;
+        });
+        html += '</div>';
+      }
+    }
+    else if (type === 'skills') {
+      if (skills.length) {
+        html += '<div class="rp-section"><div class="rp-section-title">Skills</div><div class="rp-skills-list">';
+        skills.forEach(s => html += `<span class="rp-skill">${s}</span>`);
+        html += '</div></div>';
+      }
+    }
+    else if (type === 'projects') {
+      const entries = sec.querySelectorAll('.entry-card');
+      if (entries.length) {
+        html += '<div class="rp-section"><div class="rp-section-title">Projects</div>';
+        entries.forEach(e => {
+          const name = e.querySelector('.proj-name')?.value || '';
+          const tech = e.querySelector('.proj-tech')?.value || '';
+          const desc = e.querySelector('.proj-desc')?.value || '';
+          html += `<div class="rp-exp-header"><span class="rp-company">${name}</span><span class="rp-date">${tech}</span></div>`;
+          html += `<div class="rp-text" style="margin-bottom:8px">${desc}</div>`;
+        });
+        html += '</div>';
+      }
+    }
+    else if (type === 'certifications') {
+      const entries = sec.querySelectorAll('.entry-card');
+      if (entries.length) {
+        html += '<div class="rp-section"><div class="rp-section-title">Certifications</div>';
+        entries.forEach(e => {
+          html += `<div class="rp-cert-row"><div><strong>${e.querySelector('.cert-name')?.value||''}</strong> — ${e.querySelector('.cert-issuer')?.value||''}</div><span class="rp-date">${e.querySelector('.cert-date')?.value||''}</span></div>`;
+        });
+        html += '</div>';
+      }
+    }
+    else if (type === 'languages') {
+      const entries = sec.querySelectorAll('.entry-card');
+      if (entries.length) {
+        html += '<div class="rp-section"><div class="rp-section-title">Languages</div>';
+        entries.forEach(e => {
+          html += `<div class="rp-lang-row"><strong>${e.querySelector('.lang-name')?.value||''}</strong> — ${e.querySelector('.lang-level')?.value||''}</div>`;
+        });
+        html += '</div>';
+      }
+    }
+    else if (type === 'achievements' || type === 'awards' || type === 'volunteer' || type === 'publications' || type === 'research' || type === 'hobbies' || type === 'references') {
+      const title = sec.querySelector('.section-title-text')?.textContent || type;
+      const textarea = sec.querySelector('.generic-content');
+      if (textarea && textarea.value.trim()) {
+        html += `<div class="rp-section"><div class="rp-section-title">${title}</div>`;
+        const lines = textarea.value.split('\n').filter(l => l.trim());
+        lines.forEach(l => html += `<div class="rp-text">${l}</div>`);
+        html += '</div>';
+      }
+    }
+  });
+
+  preview.innerHTML = html;
+}
+
+// ── Add Entries ──
+function addExperience() {
+  const body = document.getElementById('experienceBody');
+  const btn = body.querySelector('.add-entry-btn');
+  const card = document.createElement('div');
+  card.className = 'entry-card';
+  card.innerHTML = `<div class="entry-header"><span class="entry-title">New Experience</span><button class="section-btn" onclick="this.closest('.entry-card').remove();updatePreview()">🗑️</button></div>
+    <div class="form-row"><div class="form-group"><label>Company</label><input class="input exp-company" oninput="updatePreview()"></div><div class="form-group"><label>Title</label><input class="input exp-title" oninput="updatePreview()"></div></div>
+    <div class="form-row"><div class="form-group"><label>Start Date</label><input class="input exp-start" oninput="updatePreview()"></div><div class="form-group"><label>End Date</label><input class="input exp-end" oninput="updatePreview()"></div></div>
+    <div class="form-group"><label>Description</label><textarea class="textarea exp-desc" rows="3" oninput="updatePreview()" style="font-size:0.8rem"></textarea></div>`;
+  body.insertBefore(card, btn);
+}
+
+function addEducation() {
+  const body = document.getElementById('educationBody');
+  const btn = body.querySelector('.add-entry-btn');
+  const card = document.createElement('div');
+  card.className = 'entry-card';
+  card.innerHTML = `<div class="form-row"><div class="form-group"><label>Institution</label><input class="input edu-school" oninput="updatePreview()"></div><div class="form-group"><label>Degree</label><input class="input edu-degree" oninput="updatePreview()"></div></div>
+    <div class="form-row cols-3"><div class="form-group"><label>Field</label><input class="input edu-field" oninput="updatePreview()"></div><div class="form-group"><label>GPA</label><input class="input edu-gpa" oninput="updatePreview()"></div><div class="form-group"><label>Years</label><input class="input edu-years" oninput="updatePreview()"></div></div>`;
+  body.insertBefore(card, btn);
+}
+
+function addProject() {
+  const body = document.getElementById('projectsBody');
+  const btn = body.querySelector('.add-entry-btn');
+  const card = document.createElement('div');
+  card.className = 'entry-card';
+  card.innerHTML = `<div class="form-row"><div class="form-group"><label>Project Name</label><input class="input proj-name" oninput="updatePreview()"></div><div class="form-group"><label>Technologies</label><input class="input proj-tech" oninput="updatePreview()"></div></div>
+    <div class="form-group"><label>Description</label><textarea class="textarea proj-desc" rows="2" oninput="updatePreview()" style="font-size:0.8rem"></textarea></div>`;
+  body.insertBefore(card, btn);
+}
+
+function addCert() {
+  const body = document.getElementById('certsBody');
+  const btn = body.querySelector('.add-entry-btn');
+  const card = document.createElement('div');
+  card.className = 'entry-card';
+  card.innerHTML = `<div class="form-row cols-3"><div class="form-group"><label>Certification</label><input class="input cert-name" oninput="updatePreview()"></div><div class="form-group"><label>Issuer</label><input class="input cert-issuer" oninput="updatePreview()"></div><div class="form-group"><label>Date</label><input class="input cert-date" oninput="updatePreview()"></div></div>`;
+  body.insertBefore(card, btn);
+}
+
+function addNewSection(type) {
+  document.getElementById('addSectionMenu').classList.remove('open');
+  const titles = {achievements:'🏆 Achievements',awards:'🥇 Awards',volunteer:'🤝 Volunteer Work',publications:'📚 Publications',research:'🔬 Research Papers',hobbies:'🎯 Hobbies & Interests',references:'📋 References'};
+  const card = document.createElement('div');
+  card.className = 'section-card open';
+  card.draggable = true;
+  card.dataset.section = type;
+  card.innerHTML = `<div class="section-header" onclick="toggleSection(this)"><span class="drag-grip">⠿</span><span class="section-title-text">${titles[type]||type}</span><div class="section-actions"><button class="section-btn" onclick="event.stopPropagation();removeSection(this)">🗑️</button><span class="chevron">▼</span></div></div>
+    <div class="section-body"><div class="form-group"><label>Content (one item per line)</label><textarea class="textarea generic-content" rows="3" oninput="updatePreview()" style="font-size:0.8rem" placeholder="Enter items, one per line..."></textarea></div></div>`;
+  const addBtn = document.querySelector('.add-section-dropdown');
+  addBtn.before(card);
+  // Add drag events
+  card.addEventListener('dragstart', e => { draggedEl = card; card.classList.add('dragging'); });
+  card.addEventListener('dragend', () => { card.classList.remove('dragging'); });
+  card.addEventListener('dragover', e => { e.preventDefault(); if (card !== draggedEl) card.classList.add('drag-over'); });
+  card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+  card.addEventListener('drop', e => { e.preventDefault(); card.classList.remove('drag-over'); if (draggedEl && card !== draggedEl) { const parent = card.parentNode; const cards = [...parent.querySelectorAll('.section-card')]; const di = cards.indexOf(draggedEl); const doi = cards.indexOf(card); if (di < doi) card.after(draggedEl); else card.before(draggedEl); updatePreview(); }});
+}
+
+// ── AI Features ──
+function aiRewriteSummary() {
+  const btn = document.querySelector('[onclick="aiRewriteSummary()"]');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="ai-loading"><span class="ai-spinner"></span> Rewriting...</span>';
+  btn.disabled = true;
+  setTimeout(() => {
+    document.getElementById('summaryText').value = 'Innovative Senior Software Engineer with 6+ years of expertise in architecting scalable distributed systems and leading high-performing engineering teams. Proven track record of delivering mission-critical solutions using Python, TypeScript, React, and cloud-native technologies (AWS, Kubernetes). Spearheaded projects that drove 40% increase in user engagement, 60% reduction in system latency, and 75% decrease in authentication failures. Recognized for mentoring talent, championing engineering best practices, and consistently delivering ahead of schedule.';
+    btn.innerHTML = orig;
+    btn.disabled = false;
+    updatePreview();
+  }, 1500);
+}
+
+function aiSuggestSkills() {
+  const newSkills = ['System Design', 'Microservices', 'Terraform', 'Go', 'Leadership'];
+  newSkills.forEach(s => { if (!skills.includes(s)) skills.push(s); });
+  renderSkills();
+}
+
+function aiGenerate(section) {
+  const card = document.querySelector(`[data-section="${section}"]`);
+  const aiBtn = card.querySelector('.ai-btn');
+  const orig = aiBtn.innerHTML;
+  aiBtn.innerHTML = '<span class="ai-spinner" style="width:14px;height:14px"></span>';
+  setTimeout(() => { aiBtn.innerHTML = orig; }, 1500);
+}
+
+// ── Zoom ──
+function setZoom(level) {
+  document.getElementById('resumePreview').style.transform = `scale(${level})`;
+  document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ── Auto-save ──
+setInterval(() => {
+  const indicator = document.getElementById('saveIndicator');
+  indicator.innerHTML = '<span class="ai-spinner" style="width:10px;height:10px"></span> Saving...';
+  setTimeout(() => { indicator.innerHTML = '<div class="save-dot"></div> All changes saved'; }, 800);
+}, 15000);
+
+// ── Undo/Redo placeholders ──
+function undo() { /* placeholder */ }
+function redo() { /* placeholder */ }
+
+// ── Copilot ──
+const aiR=['Try adding more quantified achievements to boost your ATS score!','I suggest using stronger action verbs like "spearheaded" and "orchestrated".','Your resume looks great! Consider adding a certifications section.','For senior roles, emphasize leadership and mentoring experience.'];let aI=0;
+function sendMsg(){const i=document.getElementById('copilotInput'),m=i.value.trim();if(!m)return;const c=document.getElementById('copilotMessages');c.innerHTML+='<div class="copilot-msg user">'+m+'</div>';i.value='';c.scrollTop=c.scrollHeight;setTimeout(()=>{c.innerHTML+='<div class="copilot-msg ai">'+aiR[aI++%aiR.length]+'</div>';c.scrollTop=c.scrollHeight},1000)}
+
+// Initial render
+updatePreview();
+</script>
+</body>
+</html>

@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JD Matcher – ResumeAI Pro</title>
+<meta name="description" content="Match your resume against job descriptions with AI-powered analysis. Get actionable insights to improve your match score.">
+<link rel="stylesheet" href="css/main.css">
+<style>
+/* ── JD Matcher Page Styles ── */
+.jd-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+@media (max-width: 1024px) {
+  .jd-layout { grid-template-columns: 1fr; }
+}
+
+.jd-textarea {
+  min-height: 380px;
+  resize: vertical;
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+.resume-profile-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+}
+
+.skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.skill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: var(--primary-100);
+  color: var(--primary-700);
+  transition: all var(--transition-fast);
+}
+[data-theme="dark"] .skill-tag {
+  background: rgba(99,102,241,0.15);
+  color: var(--primary-300);
+}
+
+.analyze-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-8) 0;
+}
+
+/* Results */
+#resultsSection {
+  display: none;
+}
+#resultsSection.visible {
+  display: block;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.score-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-12);
+  padding: var(--space-8);
+}
+
+.score-ring-large {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+.score-ring-large svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+.score-ring-large .bg-ring {
+  fill: none;
+  stroke: var(--bg-tertiary);
+  stroke-width: 10;
+}
+.score-ring-large .fg-ring {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.5s ease-out, stroke 0.5s ease;
+}
+.score-ring-large .score-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.score-ring-large .score-value {
+  font-size: var(--text-5xl);
+  font-weight: 900;
+  line-height: 1;
+}
+.score-ring-large .score-label-text {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  font-weight: 500;
+  margin-top: var(--space-2);
+}
+.score-ring-large .score-status {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  margin-top: var(--space-2);
+}
+
+/* Breakdown bars */
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  flex: 1;
+  max-width: 400px;
+}
+.breakdown-item {}
+.breakdown-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+.breakdown-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.breakdown-value {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--primary-400);
+}
+.breakdown-bar {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.breakdown-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 1.2s ease-out;
+  background: linear-gradient(90deg, var(--primary-500), var(--accent-500));
+}
+
+/* Skill gap */
+.skill-gap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+@media (max-width: 768px) {
+  .skill-gap-grid { grid-template-columns: 1fr; }
+}
+
+.gap-column-title {
+  font-size: var(--text-base);
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.gap-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.gap-tag-match {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: var(--success-100);
+  color: var(--success-600);
+}
+[data-theme="dark"] .gap-tag-match {
+  background: rgba(16,185,129,0.15);
+  color: var(--success-400);
+}
+
+.gap-tag-missing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: var(--error-100);
+  color: var(--error-600);
+}
+[data-theme="dark"] .gap-tag-missing {
+  background: rgba(239,68,68,0.15);
+  color: var(--error-400);
+}
+
+.add-btn {
+  background: none;
+  border: 1px solid currentColor;
+  color: inherit;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-weight: 700;
+  opacity: 0.7;
+  transition: all var(--transition-fast);
+}
+.add-btn:hover {
+  opacity: 1;
+  background: currentColor;
+  color: white;
+}
+[data-theme="dark"] .add-btn:hover {
+  color: var(--bg-primary);
+}
+
+/* Keyword tags */
+.keyword-tag-found {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: var(--success-100);
+  color: var(--success-600);
+}
+[data-theme="dark"] .keyword-tag-found {
+  background: rgba(16,185,129,0.15);
+  color: var(--success-400);
+}
+
+.keyword-tag-missing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: var(--warning-100);
+  color: var(--warning-600);
+}
+[data-theme="dark"] .keyword-tag-missing {
+  background: rgba(245,158,11,0.15);
+  color: var(--warning-400);
+}
+
+/* AI Suggestion cards */
+.suggestion-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  transition: all var(--transition-base);
+}
+.suggestion-card:hover {
+  border-color: var(--primary-300);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.suggestion-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.suggestion-text {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Optimize button */
+.optimize-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-8);
+}
+
+/* Loading overlay */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  z-index: var(--z-modal);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.loading-overlay.active {
+  display: flex;
+}
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--border-primary);
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.loading-text {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--text-base);
+}
+
+/* Section heading */
+.section-heading {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.mobile-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary); }
+@media (max-width: 768px) {
+  .mobile-toggle { display: block; }
+  .score-section { flex-direction: column; gap: var(--space-6); }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header"><span style="font-size:1.5rem">🚀</span><span class="sidebar-logo text-gradient">ResumeAI Pro</span></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section"><div class="sidebar-section-title">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="builder.html" class="nav-item"><span class="nav-icon">📝</span> Resume Builder</a>
+      <a href="templates.html" class="nav-item"><span class="nav-icon">🎨</span> Templates</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Optimize</div>
+      <a href="ats-scorer.html" class="nav-item"><span class="nav-icon">📈</span> ATS Score</a>
+      <a href="jd-matcher.html" class="nav-item active"><span class="nav-icon">🎯</span> JD Matcher</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-icon">✉️</span> Cover Letter</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Prepare</div>
+      <a href="interview.html" class="nav-item"><span class="nav-icon">🎤</span> Interview Prep</a>
+      <a href="career.html" class="nav-item"><span class="nav-icon">🗺️</span> Career Guide</a>
+      <a href="tracker.html" class="nav-item"><span class="nav-icon">📋</span> Job Tracker</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Insights</div>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📉</span> Analytics</a>
+      <a href="linkedin.html" class="nav-item"><span class="nav-icon">💼</span> LinkedIn</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">System</div>
+      <a href="admin.html" class="nav-item"><span class="nav-icon">⚙️</span> Admin Panel</a></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="flex items-center gap-3" style="margin-bottom:0.75rem"><div class="avatar" style="width:36px;height:36px;font-size:0.75rem">AJ</div><div><div class="font-semibold text-sm">Alex Johnson</div><span class="badge badge-primary" style="font-size:10px">PRO</span></div></div>
+    <button class="theme-toggle w-full" onclick="toggleTheme()" style="cursor:pointer"></button>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main-content">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="flex items-center gap-4">
+      <button class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <h1 class="text-xl font-bold">Job Description Matcher</h1>
+      <span class="badge badge-accent">AI-Powered</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-sm text-secondary">Last analyzed: 2 hours ago</span>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <!-- Input Section -->
+    <div class="jd-layout" id="inputSection">
+      <!-- LEFT: Job Description -->
+      <div>
+        <div class="card">
+          <div class="flex items-center gap-3 mb-4">
+            <span style="font-size:1.3rem">📋</span>
+            <div>
+              <div class="font-semibold">Paste Job Description</div>
+              <div class="text-xs text-secondary">We'll analyze every keyword and requirement</div>
+            </div>
+          </div>
+          <textarea class="textarea jd-textarea" id="jdTextarea" placeholder="Paste the job description here...">Senior Software Engineer - Google Cloud Platform
+
+About the Role:
+We're looking for a Senior Software Engineer to join our Cloud Platform team. You'll design and build large-scale distributed systems that power Google Cloud.
+
+Responsibilities:
+• Design and implement scalable microservices
+• Lead technical design reviews and mentor engineers
+• Optimize system performance and reliability
+• Collaborate with cross-functional teams
+
+Requirements:
+• 5+ years in software development
+• Proficiency in Python, Go, or Java
+• Experience with distributed systems and Kubernetes
+• Strong system design skills
+• CI/CD pipeline experience
+• Excellent communication skills
+
+Preferred:
+• GraphQL experience
+• Terraform knowledge
+• Open source contributions
+• MS/PhD in Computer Science</textarea>
+          <div class="flex justify-between items-center mt-3">
+            <span class="text-xs text-tertiary" id="jdWordCount">142 words</span>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('jdTextarea').value='';updateWordCount()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Resume Profile -->
+      <div>
+        <div class="card">
+          <div class="flex items-center gap-3 mb-4">
+            <span style="font-size:1.3rem">👤</span>
+            <div>
+              <div class="font-semibold">Your Resume</div>
+              <div class="text-xs text-secondary">Currently active resume profile</div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 mb-6" style="padding: var(--space-4); background: var(--bg-tertiary); border-radius: var(--radius-lg);">
+            <div class="avatar avatar-lg">AJ</div>
+            <div>
+              <div class="font-bold text-lg">Alex Johnson</div>
+              <div class="text-sm text-secondary">Senior Software Engineer</div>
+              <div class="text-xs text-tertiary">6 years experience • San Francisco, CA</div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <div class="text-xs font-semibold text-secondary mb-3" style="text-transform:uppercase;letter-spacing:0.05em">Key Skills</div>
+            <div class="skill-tags">
+              <span class="skill-tag">Python</span>
+              <span class="skill-tag">JavaScript</span>
+              <span class="skill-tag">React</span>
+              <span class="skill-tag">Node.js</span>
+              <span class="skill-tag">AWS</span>
+              <span class="skill-tag">Docker</span>
+              <span class="skill-tag">Kubernetes</span>
+              <span class="skill-tag">PostgreSQL</span>
+              <span class="skill-tag">CI/CD</span>
+              <span class="skill-tag">REST APIs</span>
+              <span class="skill-tag">FastAPI</span>
+              <span class="skill-tag">MongoDB</span>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <div class="text-xs font-semibold text-secondary mb-3" style="text-transform:uppercase;letter-spacing:0.05em">Experience Highlights</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.8;">
+              <div>• Senior Software Engineer at TechCorp Inc. (2021–Present)</div>
+              <div>• Software Engineer at DataFlow Systems (2019–2021)</div>
+              <div>• Junior Developer at WebStart Agency (2018–2019)</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs font-semibold text-secondary mb-3" style="text-transform:uppercase;letter-spacing:0.05em">Education</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary);">
+              B.S. Computer Science — Stanford University, 2018
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analyze Button -->
+    <div class="analyze-btn-wrapper">
+      <button class="btn btn-primary btn-lg" id="analyzeBtn" onclick="analyzeMatch()" style="padding: var(--space-5) var(--space-12); font-size: var(--text-lg);">
+        <span id="analyzeBtnContent">Analyze Match ✨</span>
+      </button>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Analyzing job description...</div>
+      <div class="text-sm text-secondary">Comparing skills, keywords, and requirements</div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsSection">
+      <!-- Match Score -->
+      <div class="card mb-8" id="scoreCard">
+        <div class="section-heading">
+          <span>📊</span> Match Score
+        </div>
+        <div class="score-section">
+          <!-- SVG Score Gauge -->
+          <div class="score-ring-large">
+            <svg viewBox="0 0 100 100">
+              <circle class="bg-ring" cx="50" cy="50" r="42"></circle>
+              <circle class="fg-ring" id="scoreRing" cx="50" cy="50" r="42"
+                stroke="#f59e0b"
+                stroke-dasharray="263.89"
+                stroke-dashoffset="263.89"></circle>
+            </svg>
+            <div class="score-text">
+              <div class="score-value" id="scoreValue" style="color: #f59e0b;">0%</div>
+              <div class="score-label-text">Match Score</div>
+              <div class="score-status" id="scoreStatus" style="background: rgba(245,158,11,0.15); color: #f59e0b;">Good Match</div>
+            </div>
+          </div>
+
+          <!-- Breakdown Bars -->
+          <div class="breakdown-list">
+            <div class="breakdown-item">
+              <div class="breakdown-label">
+                <span class="breakdown-name">Skills Match</span>
+                <span class="breakdown-value" id="skillsVal">0%</span>
+              </div>
+              <div class="breakdown-bar">
+                <div class="breakdown-fill" id="skillsFill" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-label">
+                <span class="breakdown-name">Experience</span>
+                <span class="breakdown-value" id="experienceVal">0%</span>
+              </div>
+              <div class="breakdown-bar">
+                <div class="breakdown-fill" id="experienceFill" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-label">
+                <span class="breakdown-name">Education</span>
+                <span class="breakdown-value" id="educationVal">0%</span>
+              </div>
+              <div class="breakdown-bar">
+                <div class="breakdown-fill" id="educationFill" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-label">
+                <span class="breakdown-name">Keywords</span>
+                <span class="breakdown-value" id="keywordsVal">0%</span>
+              </div>
+              <div class="breakdown-bar">
+                <div class="breakdown-fill" id="keywordsFill" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-label">
+                <span class="breakdown-name">Certifications</span>
+                <span class="breakdown-value" id="certsVal">0%</span>
+              </div>
+              <div class="breakdown-bar">
+                <div class="breakdown-fill" id="certsFill" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skill Gap Analysis -->
+      <div class="card mb-8" id="skillGapCard">
+        <div class="section-heading">
+          <span>🔍</span> Skill Gap Analysis
+        </div>
+        <div class="skill-gap-grid">
+          <div>
+            <div class="gap-column-title">
+              <span>✅</span> Matching Skills
+            </div>
+            <div class="gap-tags" id="matchingSkills">
+              <span class="gap-tag-match">Python</span>
+              <span class="gap-tag-match">JavaScript</span>
+              <span class="gap-tag-match">React</span>
+              <span class="gap-tag-match">AWS</span>
+              <span class="gap-tag-match">Docker</span>
+              <span class="gap-tag-match">Kubernetes</span>
+              <span class="gap-tag-match">CI/CD</span>
+              <span class="gap-tag-match">PostgreSQL</span>
+            </div>
+          </div>
+          <div>
+            <div class="gap-column-title">
+              <span>❌</span> Missing Skills
+            </div>
+            <div class="gap-tags" id="missingSkills">
+              <span class="gap-tag-missing">Go <button class="add-btn" onclick="addSkill(this, 'Go')">Add</button></span>
+              <span class="gap-tag-missing">Terraform <button class="add-btn" onclick="addSkill(this, 'Terraform')">Add</button></span>
+              <span class="gap-tag-missing">GraphQL <button class="add-btn" onclick="addSkill(this, 'GraphQL')">Add</button></span>
+              <span class="gap-tag-missing">GCP <button class="add-btn" onclick="addSkill(this, 'GCP')">Add</button></span>
+              <span class="gap-tag-missing">System Design <button class="add-btn" onclick="addSkill(this, 'System Design')">Add</button></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Keyword Analysis -->
+      <div class="card mb-8" id="keywordCard">
+        <div class="section-heading">
+          <span>🔑</span> Keyword Analysis
+        </div>
+        <div class="mb-6">
+          <div class="text-sm font-semibold mb-3" style="color: var(--success-500);">✅ Found Keywords</div>
+          <div class="gap-tags">
+            <span class="keyword-tag-found">distributed systems</span>
+            <span class="keyword-tag-found">microservices</span>
+            <span class="keyword-tag-found">CI/CD</span>
+            <span class="keyword-tag-found">cloud</span>
+            <span class="keyword-tag-found">scalable</span>
+          </div>
+        </div>
+        <div>
+          <div class="text-sm font-semibold mb-3" style="color: var(--warning-500);">⚠️ Missing Keywords</div>
+          <div class="gap-tags" id="missingKeywords">
+            <span class="keyword-tag-missing">cross-functional <button class="btn btn-sm btn-outline" onclick="addKeyword(this, 'cross-functional')" style="font-size:10px;padding:1px 8px;margin-left:4px;">Add to Resume</button></span>
+            <span class="keyword-tag-missing">stakeholder <button class="btn btn-sm btn-outline" onclick="addKeyword(this, 'stakeholder')" style="font-size:10px;padding:1px 8px;margin-left:4px;">Add to Resume</button></span>
+            <span class="keyword-tag-missing">open source <button class="btn btn-sm btn-outline" onclick="addKeyword(this, 'open source')" style="font-size:10px;padding:1px 8px;margin-left:4px;">Add to Resume</button></span>
+            <span class="keyword-tag-missing">system design <button class="btn btn-sm btn-outline" onclick="addKeyword(this, 'system design')" style="font-size:10px;padding:1px 8px;margin-left:4px;">Add to Resume</button></span>
+            <span class="keyword-tag-missing">mentor <button class="btn btn-sm btn-outline" onclick="addKeyword(this, 'mentor')" style="font-size:10px;padding:1px 8px;margin-left:4px;">Add to Resume</button></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Suggestions -->
+      <div class="card mb-8" id="suggestionsCard">
+        <div class="section-heading">
+          <span>💡</span> AI Suggestions
+        </div>
+        <div class="grid grid-2 gap-4">
+          <div class="suggestion-card">
+            <span class="suggestion-icon">🎯</span>
+            <div>
+              <div class="font-semibold text-sm mb-1">Add Go Programming Language</div>
+              <div class="suggestion-text">Add Go programming language to your skills section. The JD specifically lists Go as a required proficiency.</div>
+            </div>
+          </div>
+          <div class="suggestion-card">
+            <span class="suggestion-icon">🏗️</span>
+            <div>
+              <div class="font-semibold text-sm mb-1">Highlight System Design</div>
+              <div class="suggestion-text">Include system design experience in your projects. Mention architecture decisions and trade-offs you've made.</div>
+            </div>
+          </div>
+          <div class="suggestion-card">
+            <span class="suggestion-icon">📊</span>
+            <div>
+              <div class="font-semibold text-sm mb-1">Quantify Your Impact</div>
+              <div class="suggestion-text">Quantify your impact with specific metrics. Use numbers like "reduced latency by 40%" or "handled 10M+ requests."</div>
+            </div>
+          </div>
+          <div class="suggestion-card">
+            <span class="suggestion-icon">🌐</span>
+            <div>
+              <div class="font-semibold text-sm mb-1">Open Source Contributions</div>
+              <div class="suggestion-text">Mention open source contributions if any. This is listed as a preferred qualification for the role.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- One-Click Optimize -->
+      <div class="optimize-wrapper">
+        <button class="btn btn-accent btn-lg" id="optimizeBtn" onclick="optimizeResume()" style="padding: var(--space-5) var(--space-12); font-size: var(--text-lg);">
+          <span id="optimizeBtnContent">One-Click Optimize ✨</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Copilot Widget -->
+<div class="copilot-widget"><button class="copilot-btn" onclick="document.getElementById('copilotPanel').classList.toggle('open')">✨</button><div class="copilot-panel" id="copilotPanel"><div class="copilot-header"><span style="font-size:1.2rem">🤖</span><div style="flex:1"><div class="font-semibold" style="font-size:0.9rem">AI Career Copilot</div><div style="font-size:0.65rem;opacity:0.8">● Online</div></div><button onclick="document.getElementById('copilotPanel').classList.remove('open')" style="background:none;border:none;color:white;cursor:pointer;font-size:1.1rem">✕</button></div><div class="copilot-messages" id="copilotMessages"><div class="copilot-msg ai">Hi! 👋 How can I help?</div></div><div class="copilot-input-area"><input class="copilot-input" id="copilotInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendMsg()"><button class="copilot-send" onclick="sendMsg()">→</button></div></div></div>
+
+<script>
+// Theme toggle
+function toggleTheme(){const h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();
+
+// Copilot
+const aiR=['I can help with that!','Great question! Let me provide some insights.','Based on your profile, here are my recommendations.','I suggest focusing on quantifiable achievements.'];let aI=0;
+function sendMsg(){const i=document.getElementById('copilotInput'),m=i.value.trim();if(!m)return;const c=document.getElementById('copilotMessages');c.innerHTML+='<div class="copilot-msg user">'+m+'</div>';i.value='';c.scrollTop=c.scrollHeight;setTimeout(()=>{c.innerHTML+='<div class="copilot-msg ai">'+aiR[aI++%aiR.length]+'</div>';c.scrollTop=c.scrollHeight},1000)}
+
+// Word count
+function updateWordCount() {
+  const text = document.getElementById('jdTextarea').value.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  document.getElementById('jdWordCount').textContent = words + ' words';
+}
+document.getElementById('jdTextarea').addEventListener('input', updateWordCount);
+
+// Analyze Match
+function analyzeMatch() {
+  const jd = document.getElementById('jdTextarea').value.trim();
+  if (!jd) {
+    showToast('Please paste a job description first', 'warning');
+    return;
+  }
+
+  // Show loading
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('active');
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  document.getElementById('analyzeBtnContent').innerHTML = '<span class="spinner" style="width:20px;height:20px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px;"></span> Analyzing...';
+
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    btn.disabled = false;
+    document.getElementById('analyzeBtnContent').textContent = 'Re-analyze ✨';
+
+    // Show results
+    const results = document.getElementById('resultsSection');
+    results.classList.add('visible');
+
+    // Animate score
+    animateScore(72, '#f59e0b', 'Good Match');
+
+    // Animate breakdown bars
+    setTimeout(() => {
+      animateBar('skillsFill', 'skillsVal', 75);
+      animateBar('experienceFill', 'experienceVal', 80);
+      animateBar('educationFill', 'educationVal', 90);
+      animateBar('keywordsFill', 'keywordsVal', 60);
+      animateBar('certsFill', 'certsVal', 50);
+    }, 300);
+
+    // Scroll to results
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 2000);
+}
+
+// Animate score ring
+function animateScore(targetPercent, color, statusText) {
+  const ring = document.getElementById('scoreRing');
+  const valueEl = document.getElementById('scoreValue');
+  const statusEl = document.getElementById('scoreStatus');
+  const circumference = 2 * Math.PI * 42; // ~263.89
+
+  // Set color
+  ring.setAttribute('stroke', color);
+  valueEl.style.color = color;
+  statusEl.style.background = color + '22';
+  statusEl.style.color = color;
+  statusEl.textContent = statusText;
+
+  // Animate number
+  let current = 0;
+  const duration = 1500;
+  const startTime = performance.now();
+
+  function updateNumber(timestamp) {
+    const elapsed = timestamp - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    current = Math.round(eased * targetPercent);
+    valueEl.textContent = current + '%';
+
+    if (progress < 1) {
+      requestAnimationFrame(updateNumber);
+    }
+  }
+  requestAnimationFrame(updateNumber);
+
+  // Animate ring
+  const offset = circumference - (targetPercent / 100) * circumference;
+  ring.style.strokeDashoffset = offset;
+}
+
+// Animate progress bars
+function animateBar(fillId, valId, percent) {
+  document.getElementById(fillId).style.width = percent + '%';
+  document.getElementById(valId).textContent = percent + '%';
+}
+
+// Add skill
+function addSkill(btn, skill) {
+  const parent = btn.parentElement;
+  // Transform to matching skill
+  const newTag = document.createElement('span');
+  newTag.className = 'gap-tag-match';
+  newTag.textContent = skill;
+  newTag.style.animation = 'bounceIn 0.5s ease-out forwards';
+
+  // Also add to the matching skills section
+  document.getElementById('matchingSkills').appendChild(newTag.cloneNode(true));
+
+  // Remove from missing
+  parent.style.transition = 'all 0.3s';
+  parent.style.transform = 'scale(0.8)';
+  parent.style.opacity = '0';
+  setTimeout(() => parent.remove(), 300);
+
+  showToast(skill + ' added to your resume!', 'success');
+}
+
+// Add keyword
+function addKeyword(btn, keyword) {
+  const parent = btn.parentElement;
+  parent.style.transition = 'all 0.3s';
+  parent.style.transform = 'scale(0.8)';
+  parent.style.opacity = '0';
+  setTimeout(() => parent.remove(), 300);
+
+  showToast('"' + keyword + '" added to your resume!', 'success');
+}
+
+// One-click optimize
+function optimizeResume() {
+  const btn = document.getElementById('optimizeBtn');
+  btn.disabled = true;
+  document.getElementById('optimizeBtnContent').innerHTML = '<span class="spinner" style="width:20px;height:20px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:8px;border-color:rgba(255,255,255,0.3);border-top-color:white;"></span> Optimizing...';
+
+  setTimeout(() => {
+    // Animate score from 72 to 91
+    animateScore(91, '#10b981', 'Excellent Match');
+
+    // Update bars
+    setTimeout(() => {
+      animateBar('skillsFill', 'skillsVal', 92);
+      animateBar('experienceFill', 'experienceVal', 88);
+      animateBar('educationFill', 'educationVal', 95);
+      animateBar('keywordsFill', 'keywordsFill' ? 85 : 85);
+      animateBar('certsFill', 'certsVal', 70);
+      // Fix keywords val separately
+      document.getElementById('keywordsVal').textContent = '85%';
+      document.getElementById('keywordsFill').style.width = '85%';
+    }, 300);
+
+    // Clear missing skills
+    document.getElementById('missingSkills').innerHTML =
+      '<span class="gap-tag-match" style="animation:bounceIn 0.5s ease-out forwards">Go</span>' +
+      '<span class="gap-tag-match" style="animation:bounceIn 0.5s ease-out 0.1s forwards;opacity:0">Terraform</span>' +
+      '<span class="gap-tag-match" style="animation:bounceIn 0.5s ease-out 0.2s forwards;opacity:0">GraphQL</span>' +
+      '<span class="gap-tag-match" style="animation:bounceIn 0.5s ease-out 0.3s forwards;opacity:0">GCP</span>' +
+      '<span class="gap-tag-match" style="animation:bounceIn 0.5s ease-out 0.4s forwards;opacity:0">System Design</span>';
+
+    // Clear missing keywords
+    document.getElementById('missingKeywords').innerHTML =
+      '<span class="keyword-tag-found" style="animation:bounceIn 0.5s ease-out forwards">cross-functional</span>' +
+      '<span class="keyword-tag-found" style="animation:bounceIn 0.5s ease-out 0.1s forwards;opacity:0">stakeholder</span>' +
+      '<span class="keyword-tag-found" style="animation:bounceIn 0.5s ease-out 0.2s forwards;opacity:0">open source</span>' +
+      '<span class="keyword-tag-found" style="animation:bounceIn 0.5s ease-out 0.3s forwards;opacity:0">system design</span>' +
+      '<span class="keyword-tag-found" style="animation:bounceIn 0.5s ease-out 0.4s forwards;opacity:0">mentor</span>';
+
+    // Update button
+    btn.disabled = false;
+    document.getElementById('optimizeBtnContent').textContent = '✅ Resume Optimized!';
+    btn.style.background = 'linear-gradient(135deg, var(--success-500), var(--success-600))';
+
+    showToast('🎉 Resume optimized! Score improved from 72% to 91%', 'success');
+
+    // Scroll to score
+    document.getElementById('scoreCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 1800);
+}
+
+// Toast notification
+function showToast(message, type) {
+  const container = document.getElementById('toastContainer');
+  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.innerHTML = '<span style="font-size:1.1rem">' + (icons[type] || 'ℹ️') + '</span><span style="font-size:var(--text-sm)">' + message + '</span>';
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = 'all 0.3s';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+</script>
+
+</body>
+</html>

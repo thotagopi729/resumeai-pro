@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Profile Optimizer — ResumeAI Pro</title>
+  <meta name="description" content="Optimize your LinkedIn profile with AI-powered suggestions, keyword analysis, and completion tracking.">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* ── Profile Score Gauge ── */
+    .gauge-container { display: flex; flex-direction: column; align-items: center; padding: 2rem 0; }
+    .gauge-svg { width: 220px; height: 220px; transform: rotate(-90deg); }
+    .gauge-bg { fill: none; stroke: var(--border-primary); stroke-width: 10; }
+    .gauge-fill { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1.5s ease; }
+    .gauge-center { text-align: center; margin-top: -150px; position: relative; z-index: 1; }
+    .gauge-score { font-size: 3rem; font-weight: 900; line-height: 1; }
+    .gauge-max { font-size: 1rem; color: var(--text-muted); }
+    .gauge-grade { display: inline-block; margin-top: 0.5rem; font-size: 1.4rem; font-weight: 800; padding: 0.25rem 1rem; border-radius: var(--radius-md); }
+    .gauge-grade.grade-b { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+
+    /* ── Accordion ── */
+    .accordion-item { border: 1px solid var(--border-primary); border-radius: var(--radius-lg); margin-bottom: 0.75rem; overflow: hidden; transition: box-shadow 0.3s ease; }
+    .accordion-item:hover { box-shadow: var(--shadow-md); }
+    .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; background: var(--bg-secondary); transition: background 0.2s; gap: 1rem; }
+    .accordion-header:hover { background: var(--bg-tertiary); }
+    .accordion-title { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); flex: 1; }
+    .accordion-score { font-size: 0.8rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: var(--radius-full, 999px); white-space: nowrap; }
+    .accordion-score.score-low { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .accordion-score.score-mid { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .accordion-score.score-high { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .accordion-arrow { font-size: 1.2rem; transition: transform 0.3s ease; color: var(--text-muted); }
+    .accordion-item.open .accordion-arrow { transform: rotate(180deg); }
+    .accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease; }
+    .accordion-item.open .accordion-body { max-height: 800px; }
+    .accordion-content { padding: 1.25rem; }
+    .suggestion-block { background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 1rem; margin-top: 0.75rem; }
+    .suggestion-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .suggestion-label.current { color: var(--text-muted); }
+    .suggestion-label.ai { color: var(--primary); }
+    .suggestion-text { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+    .apply-btn { margin-top: 0.75rem; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .apply-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .tip-list { list-style: none; padding: 0; margin: 0.5rem 0 0; }
+    .tip-list li { padding: 0.4rem 0; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 0.5rem; }
+    .tip-list li::before { content: '💡'; flex-shrink: 0; }
+    .skill-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .skill-tag { padding: 0.3rem 0.75rem; border-radius: var(--radius-full, 999px); font-size: 0.78rem; font-weight: 600; background: rgba(99,102,241,0.12); color: var(--primary); border: 1px solid rgba(99,102,241,0.25); }
+
+    /* ── Keyword Tags ── */
+    .keyword-group { margin-bottom: 1rem; }
+    .keyword-group-title { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .keyword-group-title.present { color: var(--success); }
+    .keyword-group-title.missing { color: #ef4444; }
+    .keyword-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .keyword-tag { padding: 0.3rem 0.7rem; border-radius: var(--radius-full, 999px); font-size: 0.75rem; font-weight: 600; }
+    .keyword-tag.present { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.25); }
+    .keyword-tag.missing { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+
+    /* ── Checklist ── */
+    .checklist { list-style: none; padding: 0; margin: 0; }
+    .checklist li { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid var(--border-secondary); font-size: 0.88rem; color: var(--text-secondary); }
+    .checklist li:last-child { border-bottom: none; }
+    .check-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .checklist li.done { color: var(--text-primary); }
+    .completion-bar-container { margin-top: 1rem; }
+    .completion-bar-header { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.5rem; }
+    .completion-bar-track { height: 10px; border-radius: 5px; background: var(--bg-tertiary); overflow: hidden; }
+    .completion-bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--primary), var(--accent, #f59e0b)); transition: width 1s ease; }
+  </style>
+</head>
+<body>
+
+<!-- ───── Sidebar ───── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header"><span style="font-size:1.5rem">🚀</span><span class="sidebar-logo text-gradient">ResumeAI Pro</span></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section"><div class="sidebar-section-title">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="builder.html" class="nav-item"><span class="nav-icon">📝</span> Resume Builder</a>
+      <a href="templates.html" class="nav-item"><span class="nav-icon">🎨</span> Templates</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Optimize</div>
+      <a href="ats-scorer.html" class="nav-item"><span class="nav-icon">📈</span> ATS Score</a>
+      <a href="jd-matcher.html" class="nav-item"><span class="nav-icon">🎯</span> JD Matcher</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-icon">✉️</span> Cover Letter</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Prepare</div>
+      <a href="interview.html" class="nav-item"><span class="nav-icon">🎤</span> Interview Prep</a>
+      <a href="career.html" class="nav-item"><span class="nav-icon">🗺️</span> Career Guide</a>
+      <a href="tracker.html" class="nav-item"><span class="nav-icon">📋</span> Job Tracker</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Insights</div>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📉</span> Analytics</a>
+      <a href="linkedin.html" class="nav-item active"><span class="nav-icon">💼</span> LinkedIn</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">System</div>
+      <a href="admin.html" class="nav-item"><span class="nav-icon">⚙️</span> Admin Panel</a></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="flex items-center gap-3" style="margin-bottom:0.75rem"><div class="avatar" style="width:36px;height:36px;font-size:0.75rem">AJ</div><div><div class="font-semibold text-sm">Alex Johnson</div><span class="badge badge-primary" style="font-size:10px">PRO</span></div></div>
+    <button class="theme-toggle w-full" onclick="toggleTheme()" style="cursor:pointer"></button>
+  </div>
+</aside>
+
+<!-- ───── Main Content ───── -->
+<main class="main-content">
+
+  <!-- Header -->
+  <div class="content-header">
+    <div>
+      <h1 class="page-title">LinkedIn Profile Optimizer</h1>
+      <p class="page-subtitle">AI-powered suggestions to make your profile stand out</p>
+    </div>
+  </div>
+
+  <!-- ── Profile Score Gauge ── -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h2 class="card-title">🎯 Profile Score</h2></div>
+    <div class="gauge-container">
+      <svg class="gauge-svg" viewBox="0 0 220 220">
+        <circle class="gauge-bg" cx="110" cy="110" r="95"/>
+        <circle class="gauge-fill" cx="110" cy="110" r="95"
+          stroke="#f59e0b"
+          stroke-dasharray="596.9"
+          stroke-dashoffset="191"
+          id="gaugeArc"/>
+      </svg>
+      <div class="gauge-center">
+        <div class="gauge-score" id="gaugeScore">0</div>
+        <div class="gauge-max">/ 100</div>
+        <div class="gauge-grade grade-b">B</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section Analysis (Accordion) ── -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h2 class="card-title">🔍 Section Analysis</h2></div>
+
+    <!-- Headline -->
+    <div class="accordion-item open">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span class="accordion-title">Headline</span>
+        <span class="accordion-score score-mid">6/10</span>
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="suggestion-block">
+            <div class="suggestion-label current">📄 Current</div>
+            <div class="suggestion-text">Software Engineer at TechCo</div>
+          </div>
+          <div class="suggestion-block" style="border-left: 3px solid var(--primary);">
+            <div class="suggestion-label ai">✨ AI Suggestion</div>
+            <div class="suggestion-text">Senior Software Engineer | Full-Stack Developer | Python &amp; React | Building Scalable Cloud Systems | Open Source Contributor</div>
+          </div>
+          <button class="apply-btn" onclick="this.textContent='✓ Applied!';this.style.background='var(--success)'">✨ Apply Suggestion</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- About -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span class="accordion-title">About</span>
+        <span class="accordion-score score-low">5/10</span>
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="suggestion-block">
+            <div class="suggestion-label current">📄 Current</div>
+            <div class="suggestion-text">Experienced software engineer with 5 years in the tech industry. Passionate about building great products.</div>
+          </div>
+          <div class="suggestion-block" style="border-left: 3px solid var(--primary);">
+            <div class="suggestion-label ai">✨ AI Suggestion</div>
+            <div class="suggestion-text">
+              With over 5 years of hands-on experience building production-grade systems, I specialize in designing and deploying scalable full-stack applications using Python, React, and cloud-native architectures. At TechCo, I led initiatives that reduced API response times by 40% and improved system reliability to 99.95% uptime.<br><br>
+              I'm deeply passionate about clean code, developer experience, and open-source collaboration. I've contributed to several high-profile projects and mentored junior engineers through code reviews and pair programming sessions.<br><br>
+              Currently exploring opportunities in engineering leadership where I can combine my technical depth with my love for building high-performing teams. Let's connect if you're working on challenging problems at scale.
+            </div>
+          </div>
+          <button class="apply-btn" onclick="this.textContent='✓ Applied!';this.style.background='var(--success)'">✨ Apply Suggestion</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Experience -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span class="accordion-title">Experience</span>
+        <span class="accordion-score score-mid">7/10</span>
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <ul class="tip-list">
+            <li>Add quantified metrics (e.g., "Reduced load time by 35%") to each role</li>
+            <li>Use stronger action verbs: "Architected" instead of "Worked on"</li>
+            <li>Include technologies used in each bullet point</li>
+            <li>Add scope context — team size, user count, revenue impact</li>
+            <li>Highlight cross-functional collaboration and leadership moments</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skills & Endorsements -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span class="accordion-title">Skills &amp; Endorsements</span>
+        <span class="accordion-score score-high">8/10</span>
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem;">Consider adding these high-demand skills to strengthen your profile:</p>
+          <div class="skill-tags">
+            <span class="skill-tag">System Design</span>
+            <span class="skill-tag">CI/CD Pipelines</span>
+            <span class="skill-tag">GraphQL</span>
+            <span class="skill-tag">Kubernetes</span>
+            <span class="skill-tag">Technical Leadership</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Featured -->
+    <div class="accordion-item">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <span class="accordion-title">Featured</span>
+        <span class="accordion-score score-low">3/10</span>
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <ul class="tip-list">
+            <li>Add a link to your portfolio website or personal projects</li>
+            <li>Feature a technical blog post or article you've written</li>
+            <li>Showcase relevant certifications (AWS, GCP, etc.)</li>
+            <li>Pin a presentation or talk if you've spoken at events</li>
+            <li>Add a project demo video or case study</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Keyword Optimization ── -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h2 class="card-title">🔑 Keyword Optimization</h2></div>
+    <div class="keyword-group">
+      <div class="keyword-group-title present">✅ Present Keywords</div>
+      <div class="keyword-tags">
+        <span class="keyword-tag present">software engineer</span>
+        <span class="keyword-tag present">python</span>
+        <span class="keyword-tag present">react</span>
+        <span class="keyword-tag present">cloud</span>
+        <span class="keyword-tag present">microservices</span>
+      </div>
+    </div>
+    <div class="keyword-group">
+      <div class="keyword-group-title missing">❌ Missing Keywords</div>
+      <div class="keyword-tags">
+        <span class="keyword-tag missing">leadership</span>
+        <span class="keyword-tag missing">cross-functional</span>
+        <span class="keyword-tag missing">agile</span>
+        <span class="keyword-tag missing">system design</span>
+        <span class="keyword-tag missing">mentoring</span>
+        <span class="keyword-tag missing">scalability</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Profile Completion Checklist ── -->
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">✅ Profile Completion Checklist</h2></div>
+    <ul class="checklist">
+      <li class="done"><span class="check-icon">✅</span> Professional photo</li>
+      <li class="done"><span class="check-icon">✅</span> Headline optimized</li>
+      <li class="done"><span class="check-icon">✅</span> About section</li>
+      <li><span class="check-icon">❌</span> Featured section</li>
+      <li class="done"><span class="check-icon">✅</span> Experience (5+ entries)</li>
+      <li><span class="check-icon">❌</span> Recommendations (need 3+)</li>
+      <li class="done"><span class="check-icon">✅</span> Skills (10+ listed)</li>
+      <li><span class="check-icon">❌</span> Volunteer experience</li>
+      <li class="done"><span class="check-icon">✅</span> Education</li>
+      <li><span class="check-icon">❌</span> Projects section</li>
+    </ul>
+    <div class="completion-bar-container">
+      <div class="completion-bar-header">
+        <span style="color:var(--text-secondary);font-weight:600;">Profile Completion</span>
+        <span style="color:var(--primary);font-weight:700;">60%</span>
+      </div>
+      <div class="completion-bar-track">
+        <div class="completion-bar-fill" style="width:60%"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ───── Copilot Widget ───── -->
+<div class="copilot-widget"><button class="copilot-btn" onclick="document.getElementById('copilotPanel').classList.toggle('open')">✨</button><div class="copilot-panel" id="copilotPanel"><div class="copilot-header"><span style="font-size:1.2rem">🤖</span><div style="flex:1"><div class="font-semibold" style="font-size:0.9rem">AI Copilot</div><div style="font-size:0.65rem;opacity:0.8">● Online</div></div><button onclick="document.getElementById('copilotPanel').classList.remove('open')" style="background:none;border:none;color:white;cursor:pointer">✕</button></div><div class="copilot-messages" id="copilotMessages"><div class="copilot-msg ai">Hi! 👋 How can I help?</div></div><div class="copilot-input-area"><input class="copilot-input" id="copilotInput" placeholder="Ask anything..." onkeydown="if(event.key==='Enter')sendMsg()"><button class="copilot-send" onclick="sendMsg()">→</button></div></div></div>
+
+<!-- ───── Scripts ───── -->
+<script>
+function toggleTheme(){const h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();
+const aiR=['Great insight!','I can help with that.','Here are my recommendations.','Let me look into that for you.'];let aI=0;
+function sendMsg(){const i=document.getElementById('copilotInput'),m=i.value.trim();if(!m)return;const c=document.getElementById('copilotMessages');c.innerHTML+='<div class="copilot-msg user">'+m+'</div>';i.value='';c.scrollTop=c.scrollHeight;setTimeout(()=>{c.innerHTML+='<div class="copilot-msg ai">'+aiR[aI++%aiR.length]+'</div>';c.scrollTop=c.scrollHeight},1000)}
+
+/* Accordion toggle */
+function toggleAccordion(header){
+  const item = header.closest('.accordion-item');
+  const wasOpen = item.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.accordion-item').forEach(a => a.classList.remove('open'));
+  // Toggle clicked
+  if (!wasOpen) item.classList.add('open');
+}
+
+/* Gauge animation */
+(function(){
+  let current = 0;
+  const target = 68;
+  const el = document.getElementById('gaugeScore');
+  const interval = setInterval(() => {
+    current++;
+    el.textContent = current;
+    if (current >= target) clearInterval(interval);
+  }, 20);
+})();
+</script>
+</body>
+</html>

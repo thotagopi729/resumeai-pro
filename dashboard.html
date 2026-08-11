@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard – ResumeAI Pro</title>
+<link rel="stylesheet" href="css/main.css">
+<style>
+.resume-card-preview { background: white; border-radius: 8px; padding: 12px; height: 140px; position: relative; overflow: hidden; }
+.rcp-name { height: 8px; width: 50%; background: #1a1a2e; border-radius: 4px; margin: 0 auto 4px; }
+.rcp-sub { height: 4px; width: 35%; background: #d1d5db; border-radius: 2px; margin: 0 auto 8px; }
+.rcp-line { height: 4px; background: #e5e7eb; border-radius: 2px; margin-bottom: 3px; }
+.rcp-badge { position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; color: white; }
+.resume-card { transition: all 0.3s; cursor: pointer; }
+.resume-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); }
+.create-card { border: 2px dashed var(--border-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 260px; cursor: pointer; transition: all 0.3s; text-decoration: none; color: var(--text-secondary); border-radius: var(--radius-xl); }
+.create-card:hover { border-color: var(--primary-400); color: var(--primary-400); background: rgba(99,102,241,0.03); }
+.create-icon { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5; }
+.action-card { background: var(--surface-card); border: 1px solid var(--border-primary); border-radius: var(--radius-xl); padding: 1.25rem; transition: all 0.3s; text-decoration: none; color: var(--text-primary); display: block; }
+.action-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--primary-200); }
+.action-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.action-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; }
+.action-desc { font-size: 0.75rem; color: var(--text-tertiary); }
+.activity-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border-secondary); }
+.activity-item:last-child { border-bottom: none; }
+.activity-icon { font-size: 1.1rem; margin-top: 2px; }
+.activity-text { font-size: 0.85rem; color: var(--text-secondary); }
+.activity-time { font-size: 0.7rem; color: var(--text-tertiary); margin-top: 2px; }
+.mini-gauge { width: 42px; height: 42px; position: relative; }
+.mini-gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.mini-gauge .bg { fill: none; stroke: var(--bg-tertiary); stroke-width: 4; }
+.mini-gauge .fg { fill: none; stroke-width: 4; stroke-linecap: round; }
+.mini-gauge-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+.search-box { position: relative; }
+.search-box input { padding-left: 2.5rem; background: var(--bg-tertiary); border: 1px solid transparent; width: 280px; }
+.search-box input:focus { border-color: var(--primary-500); background: var(--surface-input); }
+.search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); font-size: 0.9rem; }
+.notification-bell { position: relative; cursor: pointer; font-size: 1.2rem; padding: 0.5rem; }
+.notif-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--error-500); border-radius: 50%; }
+.mobile-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary); }
+@media (max-width: 768px) {
+  .mobile-toggle { display: block; }
+  .search-box input { width: 100%; }
+  .search-box { flex: 1; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <span style="font-size:1.5rem">🚀</span>
+    <span class="sidebar-logo text-gradient">ResumeAI Pro</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <a href="dashboard.html" class="nav-item active"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="builder.html" class="nav-item"><span class="nav-icon">📝</span> Resume Builder</a>
+      <a href="templates.html" class="nav-item"><span class="nav-icon">🎨</span> Templates</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Optimize</div>
+      <a href="ats-scorer.html" class="nav-item"><span class="nav-icon">📈</span> ATS Score</a>
+      <a href="jd-matcher.html" class="nav-item"><span class="nav-icon">🎯</span> JD Matcher</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-icon">✉️</span> Cover Letter</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Prepare</div>
+      <a href="interview.html" class="nav-item"><span class="nav-icon">🎤</span> Interview Prep</a>
+      <a href="career.html" class="nav-item"><span class="nav-icon">🗺️</span> Career Guide</a>
+      <a href="tracker.html" class="nav-item"><span class="nav-icon">📋</span> Job Tracker</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Insights</div>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📉</span> Analytics</a>
+      <a href="linkedin.html" class="nav-item"><span class="nav-icon">💼</span> LinkedIn</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System</div>
+      <a href="admin.html" class="nav-item"><span class="nav-icon">⚙️</span> Admin Panel</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="flex items-center gap-3" style="margin-bottom:0.75rem">
+      <div class="avatar" style="width:36px;height:36px;font-size:0.75rem">AJ</div>
+      <div><div class="font-semibold text-sm">Alex Johnson</div><span class="badge badge-primary" style="font-size:10px">PRO</span></div>
+    </div>
+    <button class="theme-toggle w-full" id="themeToggleBtn" onclick="toggleTheme()" style="cursor:pointer" title="Toggle theme"></button>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<div class="main-content">
+  <header class="page-header">
+    <div class="flex items-center gap-3">
+      <button class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <h1 class="text-xl font-bold">Dashboard</h1>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="search-box hide-mobile">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="input" placeholder="Search resumes, templates...">
+      </div>
+      <div class="notification-bell">🔔<div class="notif-dot"></div></div>
+      <div class="avatar avatar-sm">AJ</div>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <!-- Stats -->
+    <div class="grid grid-4 gap-4 mb-8">
+      <div class="stat-card animate-fade-in-up stagger-1">
+        <div class="flex items-center justify-between mb-4">
+          <div class="stat-icon" style="background:rgba(99,102,241,0.1);color:var(--primary-500)">📊</div>
+          <div class="mini-gauge">
+            <svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="17"/><circle class="fg" cx="21" cy="21" r="17" stroke="var(--success-500)" stroke-dasharray="107" stroke-dashoffset="14"/></svg>
+            <div class="mini-gauge-val" style="color:var(--success-500)">87</div>
+          </div>
+        </div>
+        <div class="stat-value" id="statAts">0</div>
+        <div class="stat-label">ATS Score</div>
+        <div class="stat-change positive">↑ +12 this week</div>
+      </div>
+      <div class="stat-card animate-fade-in-up stagger-2">
+        <div class="stat-icon" style="background:rgba(236,72,153,0.1);color:var(--accent-500)">📝</div>
+        <div class="stat-value" id="statResumes">0</div>
+        <div class="stat-label">Active Resumes</div>
+        <div class="stat-change positive">↑ 1 new this week</div>
+      </div>
+      <div class="stat-card animate-fade-in-up stagger-3">
+        <div class="stat-icon" style="background:rgba(245,158,11,0.1);color:var(--warning-500)">📨</div>
+        <div class="stat-value" id="statApps">0</div>
+        <div class="stat-label">Applications</div>
+        <div class="stat-change positive">↑ 8 this month</div>
+      </div>
+      <div class="stat-card animate-fade-in-up stagger-4">
+        <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:var(--success-500)">🎤</div>
+        <div class="stat-value" id="statInt">0</div>
+        <div class="stat-label">Interviews</div>
+        <div class="stat-change positive">↑ 2 this week</div>
+      </div>
+    </div>
+
+    <!-- Recent Resumes -->
+    <div class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold">Recent Resumes</h2>
+        <a href="builder.html" class="btn btn-ghost btn-sm">View All →</a>
+      </div>
+      <div class="grid grid-4 gap-4">
+        <div class="card resume-card" onclick="location.href='builder.html'">
+          <div class="resume-card-preview">
+            <div class="rcp-badge" style="background:#10b981">87</div>
+            <div class="rcp-name"></div><div class="rcp-sub"></div>
+            <div class="rcp-line" style="width:80%"></div><div class="rcp-line" style="width:90%"></div>
+            <div class="rcp-line" style="width:70%"></div><div class="rcp-line" style="width:85%"></div>
+            <div class="rcp-line" style="width:60%"></div><div class="rcp-line" style="width:75%"></div>
+          </div>
+          <div class="mt-3">
+            <div class="font-semibold text-sm">Senior Software Engineer</div>
+            <div class="text-xs text-secondary mt-1">Last edited 2 hours ago</div>
+            <div class="flex gap-2 mt-3">
+              <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();location.href='builder.html'">Edit</button>
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation()">⋮</button>
+            </div>
+          </div>
+        </div>
+        <div class="card resume-card" onclick="location.href='builder.html'">
+          <div class="resume-card-preview">
+            <div class="rcp-badge" style="background:#f59e0b">72</div>
+            <div class="rcp-name"></div><div class="rcp-sub"></div>
+            <div class="rcp-line" style="width:85%"></div><div class="rcp-line" style="width:75%"></div>
+            <div class="rcp-line" style="width:90%"></div><div class="rcp-line" style="width:65%"></div>
+            <div class="rcp-line" style="width:80%"></div>
+          </div>
+          <div class="mt-3">
+            <div class="font-semibold text-sm">Full Stack Developer</div>
+            <div class="text-xs text-secondary mt-1">Last edited yesterday</div>
+            <div class="flex gap-2 mt-3">
+              <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();location.href='builder.html'">Edit</button>
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation()">⋮</button>
+            </div>
+          </div>
+        </div>
+        <div class="card resume-card" onclick="location.href='builder.html'">
+          <div class="resume-card-preview">
+            <div class="rcp-badge" style="background:#10b981">91</div>
+            <div class="rcp-name"></div><div class="rcp-sub"></div>
+            <div class="rcp-line" style="width:75%"></div><div class="rcp-line" style="width:85%"></div>
+            <div class="rcp-line" style="width:90%"></div><div class="rcp-line" style="width:70%"></div>
+          </div>
+          <div class="mt-3">
+            <div class="font-semibold text-sm">Data Scientist</div>
+            <div class="text-xs text-secondary mt-1">Last edited 3 days ago</div>
+            <div class="flex gap-2 mt-3">
+              <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();location.href='builder.html'">Edit</button>
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation()">⋮</button>
+            </div>
+          </div>
+        </div>
+        <a href="builder.html" class="create-card">
+          <div class="create-icon">+</div>
+          <div class="font-semibold">Create New Resume</div>
+          <div class="text-xs mt-1" style="opacity:0.6">Start from scratch or upload</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mb-8">
+      <h2 class="text-lg font-bold mb-4">Quick Actions</h2>
+      <div class="grid grid-3 gap-4">
+        <a href="builder.html" class="action-card"><div class="action-icon">📤</div><div class="action-title">Upload Resume</div><div class="action-desc">Parse your existing resume with AI</div></a>
+        <a href="jd-matcher.html" class="action-card"><div class="action-icon">🎯</div><div class="action-title">Optimize for Job</div><div class="action-desc">Match resume to a job description</div></a>
+        <a href="cover-letter.html" class="action-card"><div class="action-icon">✉️</div><div class="action-title">Write Cover Letter</div><div class="action-desc">Generate a tailored cover letter</div></a>
+        <a href="interview.html" class="action-card"><div class="action-icon">🎤</div><div class="action-title">Practice Interview</div><div class="action-desc">Start an AI mock interview</div></a>
+        <a href="ats-scorer.html" class="action-card"><div class="action-icon">📊</div><div class="action-title">Check ATS Score</div><div class="action-desc">Analyze ATS compatibility</div></a>
+        <a href="career.html" class="action-card"><div class="action-icon">🗺️</div><div class="action-title">Get Career Advice</div><div class="action-desc">AI-powered career guidance</div></a>
+      </div>
+    </div>
+
+    <!-- Activity Feed -->
+    <div>
+      <h2 class="text-lg font-bold mb-4">Recent Activity</h2>
+      <div class="card">
+        <div class="activity-item"><div class="activity-icon">✅</div><div><div class="activity-text">ATS Score improved to <strong>87</strong></div><div class="activity-time">2 hours ago</div></div></div>
+        <div class="activity-item"><div class="activity-icon">📝</div><div><div class="activity-text">Updated <strong>Senior SWE Resume</strong></div><div class="activity-time">5 hours ago</div></div></div>
+        <div class="activity-item"><div class="activity-icon">🎯</div><div><div class="activity-text">Matched resume to <strong>Google SWE role</strong> — 78% match</div><div class="activity-time">Yesterday</div></div></div>
+        <div class="activity-item"><div class="activity-icon">✉️</div><div><div class="activity-text">Generated cover letter for <strong>Meta</strong></div><div class="activity-time">2 days ago</div></div></div>
+        <div class="activity-item"><div class="activity-icon">📤</div><div><div class="activity-text">Uploaded new resume — <strong>Data Scientist</strong></div><div class="activity-time">3 days ago</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Copilot Widget -->
+<div class="copilot-widget">
+  <button class="copilot-btn" id="copilotToggle" onclick="toggleCopilot()">✨</button>
+  <div class="copilot-panel" id="copilotPanel">
+    <div class="copilot-header">
+      <span style="font-size:1.2rem">🤖</span>
+      <div style="flex:1"><div class="font-semibold" style="font-size:0.9rem">AI Career Copilot</div><div style="font-size:0.65rem;opacity:0.8">● Online</div></div>
+      <button onclick="toggleCopilot()" style="background:none;border:none;color:white;cursor:pointer;font-size:1.1rem">✕</button>
+    </div>
+    <div class="copilot-messages" id="copilotMessages">
+      <div class="copilot-msg ai">Hi Alex! 👋 I'm your AI Career Copilot. I can help you with resume optimization, interview prep, career advice, and more. What would you like to work on today?</div>
+    </div>
+    <div class="copilot-input-area">
+      <input type="text" class="copilot-input" id="copilotInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendCopilotMsg()">
+      <button class="copilot-send" onclick="sendCopilotMsg()">→</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Theme
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+}
+(function(){ const s=localStorage.getItem('theme')||'dark'; document.documentElement.setAttribute('data-theme',s); })();
+
+// Stat Animations
+function animateVal(id, target, duration=1200) {
+  const el = document.getElementById(id);
+  const start = performance.now();
+  function step(ts) {
+    const p = Math.min((ts-start)/duration, 1);
+    const eased = 1 - Math.pow(1-p, 3);
+    el.textContent = Math.round(target * eased);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+setTimeout(() => { animateVal('statAts', 87); animateVal('statResumes', 3); animateVal('statApps', 24); animateVal('statInt', 5); }, 300);
+
+// Copilot
+function toggleCopilot() { document.getElementById('copilotPanel').classList.toggle('open'); }
+const aiResponses = [
+  "I'd recommend optimizing your resume keywords for the specific role. Would you like me to analyze your resume against a job description?",
+  "Great question! Try quantifying your achievements. Instead of 'improved performance', say 'improved API response time by 40%, serving 2M+ daily requests'.",
+  "I can help with that! Let me suggest some relevant interview questions. Would you prefer technical or behavioral questions?",
+  "Your resume looks strong! Consider adding more action verbs like 'architected', 'spearheaded', 'optimized' to boost your ATS score by 10-15 points.",
+  "Based on your profile, I'd recommend getting an AWS Solutions Architect certification. It's highly valued for senior engineering roles and takes about 2-3 months to prepare.",
+  "For your cover letter, focus on demonstrating impact. Lead with your strongest achievement and connect it directly to the job requirements."
+];
+let aiIdx = 0;
+function sendCopilotMsg() {
+  const input = document.getElementById('copilotInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const container = document.getElementById('copilotMessages');
+  container.innerHTML += `<div class="copilot-msg user">${msg}</div>`;
+  input.value = '';
+  container.scrollTop = container.scrollHeight;
+  setTimeout(() => {
+    container.innerHTML += `<div class="copilot-msg ai">${aiResponses[aiIdx % aiResponses.length]}</div>`;
+    aiIdx++;
+    container.scrollTop = container.scrollHeight;
+  }, 1000);
+}
+</script>
+</body>
+</html>

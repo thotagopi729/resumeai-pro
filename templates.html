@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Template Library — ResumeAI Pro</title>
+  <meta name="description" content="Browse 100+ ATS-optimized professional resume templates. Find the perfect template for your industry and career level.">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .templates-header { margin-bottom: 2rem; }
+    .templates-header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .templates-header p { opacity: 0.7; font-size: 0.95rem; }
+
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1.5rem; }
+    .filter-bar .search-box {
+      margin-left: auto;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      min-width: 220px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .filter-bar .search-box:focus { border-color: var(--primary); }
+    .filter-bar .search-box::placeholder { color: var(--text-secondary); }
+
+    .chip {
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .chip:hover { border-color: var(--primary); color: var(--primary); }
+    .chip.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .template-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: default;
+    }
+    .template-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+    }
+
+    .template-preview {
+      height: 110px;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .template-info {
+      padding: 0.85rem 1rem;
+    }
+    .template-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.4rem;
+      color: var(--text-primary);
+    }
+    .template-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.65rem;
+    }
+    .template-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .template-actions .btn-primary,
+    .template-actions .btn-ghost {
+      flex: 1;
+      text-align: center;
+      padding: 0.4rem 0.5rem;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .template-actions .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+    }
+    .template-actions .btn-primary:hover { filter: brightness(1.15); }
+    .template-actions .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .template-actions .btn-ghost:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .badge-ats {
+      background: rgba(16,185,129,0.15);
+      color: #10b981;
+      font-size: 0.65rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .badge-free {
+      background: rgba(99,102,241,0.15);
+      color: #818cf8;
+      font-size: 0.65rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .badge-pro-tag {
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      color: #fff;
+      font-size: 0.6rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Mini resume preview styles */
+    .preview-lines { position: absolute; inset: 8px; }
+    .pline { border-radius: 2px; position: absolute; }
+
+    /* Classic Professional */
+    .preview-classic .p-header { background: #3b82f6; height: 18px; top: 0; left: 0; right: 0; border-radius: 2px 2px 0 0; }
+    .preview-classic .p-name { background: #e2e8f0; height: 5px; top: 24px; left: 8px; width: 55%; }
+    .preview-classic .p-line1 { background: #cbd5e1; height: 3px; top: 35px; left: 8px; right: 8px; }
+    .preview-classic .p-line2 { background: #cbd5e1; height: 3px; top: 42px; left: 8px; right: 20px; }
+    .preview-classic .p-line3 { background: #cbd5e1; height: 3px; top: 49px; left: 8px; right: 30px; }
+    .preview-classic .p-sec { background: #3b82f6; height: 3px; top: 60px; left: 8px; width: 35%; opacity: 0.5; }
+    .preview-classic .p-line4 { background: #e2e8f0; height: 3px; top: 68px; left: 8px; right: 8px; }
+    .preview-classic .p-line5 { background: #e2e8f0; height: 3px; top: 75px; left: 8px; right: 15px; }
+
+    /* Modern Minimal */
+    .preview-modern { border-left: 4px solid #8b5cf6; }
+    .preview-modern .p-name { background: #1e293b; height: 6px; top: 10px; left: 14px; width: 45%; }
+    .preview-modern .p-sub { background: #94a3b8; height: 3px; top: 22px; left: 14px; width: 30%; }
+    .preview-modern .p-line1 { background: #e2e8f0; height: 2px; top: 34px; left: 14px; right: 10px; }
+    .preview-modern .p-line2 { background: #e2e8f0; height: 2px; top: 40px; left: 14px; right: 18px; }
+    .preview-modern .p-sec { background: #8b5cf6; height: 2px; top: 52px; left: 14px; width: 25%; }
+    .preview-modern .p-line3 { background: #e2e8f0; height: 2px; top: 60px; left: 14px; right: 10px; }
+    .preview-modern .p-line4 { background: #e2e8f0; height: 2px; top: 66px; left: 14px; right: 22px; }
+    .preview-modern .p-line5 { background: #e2e8f0; height: 2px; top: 72px; left: 14px; right: 14px; }
+
+    /* Executive Bold */
+    .preview-executive .p-header { background: #1e293b; height: 28px; top: 0; left: 0; right: 0; }
+    .preview-executive .p-name { background: #f8fafc; height: 5px; top: 8px; left: 12px; width: 40%; }
+    .preview-executive .p-sub { background: rgba(248,250,252,0.5); height: 3px; top: 17px; left: 12px; width: 25%; }
+    .preview-executive .p-line1 { background: #cbd5e1; height: 3px; top: 36px; left: 10px; right: 10px; }
+    .preview-executive .p-line2 { background: #cbd5e1; height: 3px; top: 43px; left: 10px; right: 16px; }
+    .preview-executive .p-line3 { background: #e2e8f0; height: 3px; top: 54px; left: 10px; right: 10px; }
+    .preview-executive .p-line4 { background: #e2e8f0; height: 3px; top: 61px; left: 10px; right: 20px; }
+    .preview-executive .p-gold { background: #f59e0b; height: 2px; top: 72px; left: 10px; width: 30%; }
+
+    /* Tech Stack - Two Column */
+    .preview-tech .p-left { background: #0f172a; position: absolute; left: 0; top: 0; bottom: 0; width: 35%; }
+    .preview-tech .p-lname { background: #38bdf8; height: 4px; top: 12px; left: 8px; width: 22%; }
+    .preview-tech .p-ltag1 { background: rgba(56,189,248,0.3); height: 3px; top: 24px; left: 8px; width: 18%; border-radius: 3px; }
+    .preview-tech .p-ltag2 { background: rgba(56,189,248,0.3); height: 3px; top: 31px; left: 8px; width: 14%; border-radius: 3px; }
+    .preview-tech .p-ltag3 { background: rgba(56,189,248,0.3); height: 3px; top: 38px; left: 8px; width: 20%; border-radius: 3px; }
+    .preview-tech .p-ltag4 { background: rgba(56,189,248,0.3); height: 3px; top: 45px; left: 8px; width: 16%; border-radius: 3px; }
+    .preview-tech .p-rhead { background: #1e293b; height: 4px; top: 10px; left: 40%; width: 30%; }
+    .preview-tech .p-rline1 { background: #e2e8f0; height: 2px; top: 22px; left: 40%; right: 10px; }
+    .preview-tech .p-rline2 { background: #e2e8f0; height: 2px; top: 28px; left: 40%; right: 18px; }
+    .preview-tech .p-rline3 { background: #e2e8f0; height: 2px; top: 34px; left: 40%; right: 12px; }
+    .preview-tech .p-rsec { background: #1e293b; height: 4px; top: 46px; left: 40%; width: 25%; }
+    .preview-tech .p-rline4 { background: #e2e8f0; height: 2px; top: 56px; left: 40%; right: 10px; }
+    .preview-tech .p-rline5 { background: #e2e8f0; height: 2px; top: 62px; left: 40%; right: 20px; }
+
+    /* Creative Flow */
+    .preview-creative .p-header { background: linear-gradient(135deg, #ec4899, #f97316); height: 24px; top: 0; left: 0; right: 0; border-radius: 2px 2px 0 0; }
+    .preview-creative .p-name { background: rgba(255,255,255,0.9); height: 5px; top: 6px; left: 50%; transform: translateX(-50%); width: 35%; }
+    .preview-creative .p-sub { background: rgba(255,255,255,0.6); height: 3px; top: 14px; left: 50%; transform: translateX(-50%); width: 20%; }
+    .preview-creative .p-line1 { background: #fecdd3; height: 3px; top: 32px; left: 10px; right: 10px; }
+    .preview-creative .p-line2 { background: #fecdd3; height: 3px; top: 39px; left: 10px; right: 18px; }
+    .preview-creative .p-sec { background: #ec4899; height: 3px; top: 50px; left: 10px; width: 28%; opacity: 0.6; }
+    .preview-creative .p-line3 { background: #fce7f3; height: 3px; top: 58px; left: 10px; right: 10px; }
+    .preview-creative .p-line4 { background: #fce7f3; height: 3px; top: 65px; left: 10px; right: 24px; }
+
+    /* Academic Research */
+    .preview-academic .p-name { background: #1e293b; height: 6px; top: 10px; left: 50%; transform: translateX(-50%); width: 50%; }
+    .preview-academic .p-sub { background: #64748b; height: 3px; top: 22px; left: 50%; transform: translateX(-50%); width: 35%; }
+    .preview-academic .p-divider { background: #1e293b; height: 1px; top: 32px; left: 15px; right: 15px; }
+    .preview-academic .p-sec { background: #475569; height: 3px; top: 40px; left: 10px; width: 32%; font-style: italic; }
+    .preview-academic .p-line1 { background: #e2e8f0; height: 2px; top: 48px; left: 10px; right: 10px; }
+    .preview-academic .p-line2 { background: #e2e8f0; height: 2px; top: 54px; left: 10px; right: 16px; }
+    .preview-academic .p-line3 { background: #e2e8f0; height: 2px; top: 60px; left: 10px; right: 10px; }
+    .preview-academic .p-sec2 { background: #475569; height: 3px; top: 70px; left: 10px; width: 28%; }
+    .preview-academic .p-line4 { background: #e2e8f0; height: 2px; top: 78px; left: 10px; right: 14px; }
+
+    /* Data Analyst Pro */
+    .preview-data .p-header { background: #059669; height: 14px; top: 0; left: 0; right: 0; }
+    .preview-data .p-name { background: #fff; height: 4px; top: 4px; left: 10px; width: 35%; }
+    .preview-data .p-grid1 { border: 1px solid #d1d5db; top: 20px; left: 8px; width: 45%; height: 25px; border-radius: 3px; }
+    .preview-data .p-grid2 { border: 1px solid #d1d5db; top: 20px; right: 8px; width: 45%; height: 25px; border-radius: 3px; }
+    .preview-data .p-g1line { background: #059669; height: 2px; top: 28px; left: 14px; width: 20%; opacity: 0.5; }
+    .preview-data .p-g2line { background: #059669; height: 2px; top: 28px; right: 14px; width: 18%; opacity: 0.5; }
+    .preview-data .p-line1 { background: #e2e8f0; height: 2px; top: 54px; left: 8px; right: 8px; }
+    .preview-data .p-line2 { background: #e2e8f0; height: 2px; top: 60px; left: 8px; right: 16px; }
+    .preview-data .p-line3 { background: #e2e8f0; height: 2px; top: 66px; left: 8px; right: 10px; }
+    .preview-data .p-sec { background: #059669; height: 2px; top: 76px; left: 8px; width: 25%; opacity: 0.5; }
+    .preview-data .p-line4 { background: #e2e8f0; height: 2px; top: 83px; left: 8px; right: 12px; }
+
+    /* Startup Ready */
+    .preview-startup .p-name { background: #1e293b; height: 5px; top: 14px; left: 10px; width: 38%; }
+    .preview-startup .p-line1 { background: #f1f5f9; height: 2px; top: 28px; left: 10px; right: 10px; }
+    .preview-startup .p-line2 { background: #f1f5f9; height: 2px; top: 34px; left: 10px; right: 20px; }
+    .preview-startup .p-divider { background: #e2e8f0; height: 1px; top: 44px; left: 10px; right: 10px; }
+    .preview-startup .p-line3 { background: #f1f5f9; height: 2px; top: 52px; left: 10px; right: 10px; }
+    .preview-startup .p-line4 { background: #f1f5f9; height: 2px; top: 58px; left: 10px; right: 14px; }
+    .preview-startup .p-divider2 { background: #e2e8f0; height: 1px; top: 68px; left: 10px; right: 10px; }
+    .preview-startup .p-line5 { background: #f1f5f9; height: 2px; top: 76px; left: 10px; right: 10px; }
+
+    /* Corporate Elite */
+    .preview-corporate { border: 2px solid #1e293b; }
+    .preview-corporate .p-name { background: #0f172a; height: 5px; top: 10px; left: 12px; width: 42%; }
+    .preview-corporate .p-sub { background: #94a3b8; height: 3px; top: 20px; left: 12px; width: 28%; }
+    .preview-corporate .p-border { background: #0f172a; height: 2px; top: 30px; left: 0; right: 0; }
+    .preview-corporate .p-line1 { background: #cbd5e1; height: 2px; top: 40px; left: 12px; right: 12px; }
+    .preview-corporate .p-line2 { background: #cbd5e1; height: 2px; top: 46px; left: 12px; right: 18px; }
+    .preview-corporate .p-line3 { background: #cbd5e1; height: 2px; top: 52px; left: 12px; right: 12px; }
+    .preview-corporate .p-border2 { background: #0f172a; height: 1px; top: 62px; left: 12px; right: 12px; opacity: 0.3; }
+    .preview-corporate .p-line4 { background: #e2e8f0; height: 2px; top: 70px; left: 12px; right: 12px; }
+    .preview-corporate .p-line5 { background: #e2e8f0; height: 2px; top: 76px; left: 12px; right: 20px; }
+
+    /* Fresh Graduate */
+    .preview-fresh .p-accent { background: #6366f1; height: 3px; top: 0; left: 0; right: 0; }
+    .preview-fresh .p-name { background: #1e293b; height: 5px; top: 12px; left: 10px; width: 40%; }
+    .preview-fresh .p-contact { background: #94a3b8; height: 2px; top: 22px; left: 10px; width: 55%; }
+    .preview-fresh .p-sec { background: #6366f1; height: 2px; top: 34px; left: 10px; width: 22%; opacity: 0.6; }
+    .preview-fresh .p-line1 { background: #e2e8f0; height: 2px; top: 42px; left: 10px; right: 10px; }
+    .preview-fresh .p-line2 { background: #e2e8f0; height: 2px; top: 48px; left: 10px; right: 16px; }
+    .preview-fresh .p-sec2 { background: #6366f1; height: 2px; top: 58px; left: 10px; width: 18%; opacity: 0.6; }
+    .preview-fresh .p-line3 { background: #e2e8f0; height: 2px; top: 66px; left: 10px; right: 10px; }
+    .preview-fresh .p-line4 { background: #e2e8f0; height: 2px; top: 72px; left: 10px; right: 22px; }
+
+    /* AI Engineer */
+    .preview-ai .p-left { background: linear-gradient(180deg, #0ea5e9, #8b5cf6); position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
+    .preview-ai .p-name { background: #0ea5e9; height: 5px; top: 10px; left: 16px; width: 40%; }
+    .preview-ai .p-sub { background: #94a3b8; height: 3px; top: 20px; left: 16px; width: 30%; }
+    .preview-ai .p-tag1 { background: rgba(14,165,233,0.2); height: 8px; top: 30px; left: 16px; width: 18%; border-radius: 4px; }
+    .preview-ai .p-tag2 { background: rgba(139,92,246,0.2); height: 8px; top: 30px; left: 38%; width: 15%; border-radius: 4px; }
+    .preview-ai .p-tag3 { background: rgba(14,165,233,0.2); height: 8px; top: 30px; left: 56%; width: 20%; border-radius: 4px; }
+    .preview-ai .p-line1 { background: #e2e8f0; height: 2px; top: 48px; left: 16px; right: 10px; }
+    .preview-ai .p-line2 { background: #e2e8f0; height: 2px; top: 54px; left: 16px; right: 16px; }
+    .preview-ai .p-line3 { background: #e2e8f0; height: 2px; top: 60px; left: 16px; right: 10px; }
+    .preview-ai .p-sec { background: #8b5cf6; height: 2px; top: 70px; left: 16px; width: 20%; opacity: 0.5; }
+    .preview-ai .p-line4 { background: #e2e8f0; height: 2px; top: 78px; left: 16px; right: 12px; }
+
+    /* Product Leader */
+    .preview-product .p-header { background: #f59e0b; height: 4px; top: 0; left: 0; right: 0; }
+    .preview-product .p-name { background: #1e293b; height: 5px; top: 12px; left: 10px; width: 42%; }
+    .preview-product .p-sub { background: #94a3b8; height: 3px; top: 22px; left: 10px; width: 55%; }
+    .preview-product .p-sec { background: #f59e0b; height: 2px; top: 34px; left: 10px; width: 28%; opacity: 0.6; }
+    .preview-product .p-box1 { border: 1px solid #fde68a; top: 40px; left: 10px; width: 30%; height: 14px; border-radius: 4px; }
+    .preview-product .p-box2 { border: 1px solid #fde68a; top: 40px; left: 44%; width: 30%; height: 14px; border-radius: 4px; }
+    .preview-product .p-box3 { border: 1px solid #fde68a; top: 40px; right: 10px; width: 18%; height: 14px; border-radius: 4px; }
+    .preview-product .p-line1 { background: #e2e8f0; height: 2px; top: 64px; left: 10px; right: 10px; }
+    .preview-product .p-line2 { background: #e2e8f0; height: 2px; top: 70px; left: 10px; right: 18px; }
+    .preview-product .p-line3 { background: #e2e8f0; height: 2px; top: 76px; left: 10px; right: 10px; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.25s ease;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 560px;
+      max-height: 85vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 { font-size: 1.1rem; font-weight: 600; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 1.5rem; }
+    .modal-preview {
+      background: #fff;
+      border-radius: 8px;
+      height: 280px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+    .modal-footer .btn-primary {
+      padding: 0.55rem 1.5rem;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+    .modal-footer .btn-primary:hover { filter: brightness(1.15); }
+    .modal-footer .btn-ghost {
+      padding: 0.55rem 1.25rem;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .modal-footer .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+
+    .modal-meta {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .modal-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      display: none;
+    }
+    .no-results .no-results-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+    /* Mobile sidebar toggle */
+    .mobile-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 200;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+    @media (max-width: 768px) {
+      .mobile-toggle { display: flex; }
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0 !important; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-bar .search-box { margin-left: 0; min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="mobile-toggle" id="mobileToggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <span style="font-size:1.5rem">🚀</span>
+    <span class="sidebar-logo text-gradient">ResumeAI Pro</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="builder.html" class="nav-item"><span class="nav-icon">📝</span> Resume Builder</a>
+      <a href="templates.html" class="nav-item active"><span class="nav-icon">🎨</span> Templates</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Optimize</div>
+      <a href="ats-scorer.html" class="nav-item"><span class="nav-icon">📈</span> ATS Score</a>
+      <a href="jd-matcher.html" class="nav-item"><span class="nav-icon">🎯</span> JD Matcher</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-icon">✉️</span> Cover Letter</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Prepare</div>
+      <a href="interview.html" class="nav-item"><span class="nav-icon">🎤</span> Interview Prep</a>
+      <a href="career.html" class="nav-item"><span class="nav-icon">🗺️</span> Career Guide</a>
+      <a href="tracker.html" class="nav-item"><span class="nav-icon">📋</span> Job Tracker</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Insights</div>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📉</span> Analytics</a>
+      <a href="linkedin.html" class="nav-item"><span class="nav-icon">💼</span> LinkedIn</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">System</div>
+      <a href="admin.html" class="nav-item"><span class="nav-icon">⚙️</span> Admin Panel</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="flex items-center gap-3" style="margin-bottom:0.75rem">
+      <div class="avatar" style="width:36px;height:36px;font-size:0.75rem">AJ</div>
+      <div><div class="font-semibold text-sm">Alex Johnson</div><span class="badge badge-primary" style="font-size:10px">PRO</span></div>
+    </div>
+    <button class="theme-toggle w-full" onclick="toggleTheme()" style="cursor:pointer" title="Toggle theme"></button>
+  </div>
+</aside>
+
+<main class="main-content" id="mainContent">
+  <div class="templates-header">
+    <h1>Template Library</h1>
+    <p>100+ ATS-Optimized Professional Templates</p>
+  </div>
+
+  <div class="filter-bar" id="filterBar">
+    <span class="chip active" data-filter="all">All</span>
+    <span class="chip" data-filter="fresher">Fresher</span>
+    <span class="chip" data-filter="software-engineer">Software Engineer</span>
+    <span class="chip" data-filter="data-scientist">Data Scientist</span>
+    <span class="chip" data-filter="ai-ml">AI/ML</span>
+    <span class="chip" data-filter="product-manager">Product Manager</span>
+    <span class="chip" data-filter="business-analyst">Business Analyst</span>
+    <span class="chip" data-filter="executive">Executive</span>
+    <span class="chip" data-filter="creative">Creative</span>
+    <span class="chip" data-filter="academic">Academic</span>
+    <span class="chip" data-filter="minimalist">Minimalist</span>
+    <input type="text" class="search-box" id="searchInput" placeholder="🔍 Search templates...">
+  </div>
+
+  <div class="template-grid" id="templateGrid">
+
+    <!-- 1. Classic Professional -->
+    <div class="template-card" data-category="all software-engineer" data-name="Classic Professional">
+      <div class="template-preview preview-classic">
+        <div class="preview-lines">
+          <div class="pline p-header"></div>
+          <div class="pline p-name"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-line3"></div>
+          <div class="pline p-sec"></div>
+          <div class="pline p-line4"></div>
+          <div class="pline p-line5"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Classic Professional</div>
+        <div class="template-meta">
+          <span class="badge badge-primary" style="font-size:0.6rem">Software Engineer</span>
+          <span class="badge-ats">ATS 96</span>
+          <span class="badge-free">Free</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Classic Professional','A timeless single-column layout with a bold blue header, clean section dividers, and optimized spacing for ATS parsers.','software-engineer','96','free')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Modern Minimal -->
+    <div class="template-card" data-category="all minimalist" data-name="Modern Minimal">
+      <div class="template-preview preview-modern">
+        <div class="preview-lines">
+          <div class="pline p-name"></div>
+          <div class="pline p-sub"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-sec"></div>
+          <div class="pline p-line3"></div>
+          <div class="pline p-line4"></div>
+          <div class="pline p-line5"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Modern Minimal</div>
+        <div class="template-meta">
+          <span class="badge badge-primary" style="font-size:0.6rem">Minimalist</span>
+          <span class="badge-ats">ATS 94</span>
+          <span class="badge-free">Free</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Modern Minimal','A sleek left-accent design with generous whitespace and modern typography. Perfect for tech and startup roles.','minimalist','94','free')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Executive Bold -->
+    <div class="template-card" data-category="all executive" data-name="Executive Bold">
+      <div class="template-preview preview-executive">
+        <div class="preview-lines">
+          <div class="pline p-header"></div>
+          <div class="pline p-name"></div>
+          <div class="pline p-sub"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-line3"></div>
+          <div class="pline p-line4"></div>
+          <div class="pline p-gold"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Executive Bold</div>
+        <div class="template-meta">
+          <span class="badge badge-success" style="font-size:0.6rem">Executive</span>
+          <span class="badge-ats">ATS 92</span>
+          <span class="badge-pro-tag">PRO</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Executive Bold','A powerful dark-header design that commands attention. Gold accents and structured layout for C-level and senior roles.','executive','92','pro')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Tech Stack -->
+    <div class="template-card" data-category="all software-engineer ai-ml" data-name="Tech Stack">
+      <div class="template-preview preview-tech">
+        <div class="preview-lines">
+          <div class="pline p-left"></div>
+          <div class="pline p-lname"></div>
+          <div class="pline p-ltag1"></div>
+          <div class="pline p-ltag2"></div>
+          <div class="pline p-ltag3"></div>
+          <div class="pline p-ltag4"></div>
+          <div class="pline p-rhead"></div>
+          <div class="pline p-rline1"></div>
+          <div class="pline p-rline2"></div>
+          <div class="pline p-rline3"></div>
+          <div class="pline p-rsec"></div>
+          <div class="pline p-rline4"></div>
+          <div class="pline p-rline5"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Tech Stack</div>
+        <div class="template-meta">
+          <span class="badge badge-primary" style="font-size:0.6rem">Software / AI</span>
+          <span class="badge-ats">ATS 91</span>
+          <span class="badge-pro-tag">PRO</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Tech Stack','A two-column layout with a dark sidebar for skills and certifications. Right column for experience and education.','software-engineer','91','pro')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Creative Flow -->
+    <div class="template-card" data-category="all creative" data-name="Creative Flow">
+      <div class="template-preview preview-creative">
+        <div class="preview-lines">
+          <div class="pline p-header"></div>
+          <div class="pline p-name"></div>
+          <div class="pline p-sub"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-sec"></div>
+          <div class="pline p-line3"></div>
+          <div class="pline p-line4"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Creative Flow</div>
+        <div class="template-meta">
+          <span class="badge badge-primary" style="font-size:0.6rem">Creative</span>
+          <span class="badge-ats">ATS 90</span>
+          <span class="badge-free">Free</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Creative Flow','A vibrant gradient header with centered name. Perfect for design, marketing, and creative industry roles.','creative','90','free')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Academic Research -->
+    <div class="template-card" data-category="all academic" data-name="Academic Research">
+      <div class="template-preview preview-academic">
+        <div class="preview-lines">
+          <div class="pline p-name"></div>
+          <div class="pline p-sub"></div>
+          <div class="pline p-divider"></div>
+          <div class="pline p-sec"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-line3"></div>
+          <div class="pline p-sec2"></div>
+          <div class="pline p-line4"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Academic Research</div>
+        <div class="template-meta">
+          <span class="badge badge-success" style="font-size:0.6rem">Academic</span>
+          <span class="badge-ats">ATS 93</span>
+          <span class="badge-free">Free</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Academic Research','A serif-inspired centered layout with formal section dividers. Ideal for academic, research, and PhD applications.','academic','93','free')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Data Analyst Pro -->
+    <div class="template-card" data-category="all data-scientist" data-name="Data Analyst Pro">
+      <div class="template-preview preview-data">
+        <div class="preview-lines">
+          <div class="pline p-header"></div>
+          <div class="pline p-name"></div>
+          <div class="pline p-grid1"></div>
+          <div class="pline p-grid2"></div>
+          <div class="pline p-g1line"></div>
+          <div class="pline p-g2line"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-line3"></div>
+          <div class="pline p-sec"></div>
+          <div class="pline p-line4"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Data Analyst Pro</div>
+        <div class="template-meta">
+          <span class="badge badge-primary" style="font-size:0.6rem">Data Scientist</span>
+          <span class="badge-ats">ATS 95</span>
+          <span class="badge-pro-tag">PRO</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Data Analyst Pro','Structured grid layout with green accent header. Features key metrics boxes and organized data sections.','data-scientist','95','pro')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. Startup Ready -->
+    <div class="template-card" data-category="all fresher minimalist" data-name="Startup Ready">
+      <div class="template-preview preview-startup">
+        <div class="preview-lines">
+          <div class="pline p-name"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-divider"></div>
+          <div class="pline p-line3"></div>
+          <div class="pline p-line4"></div>
+          <div class="pline p-divider2"></div>
+          <div class="pline p-line5"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Startup Ready</div>
+        <div class="template-meta">
+          <span class="badge badge-primary" style="font-size:0.6rem">Fresher</span>
+          <span class="badge-ats">ATS 97</span>
+          <span class="badge-free">Free</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Startup Ready','Ultra-minimal design with clean dividers and maximum whitespace. Perfect for startup applications and first-timers.','fresher','97','free')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. Corporate Elite -->
+    <div class="template-card" data-category="all executive business-analyst" data-name="Corporate Elite">
+      <div class="template-preview preview-corporate">
+        <div class="preview-lines">
+          <div class="pline p-name"></div>
+          <div class="pline p-sub"></div>
+          <div class="pline p-border"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-line3"></div>
+          <div class="pline p-border2"></div>
+          <div class="pline p-line4"></div>
+          <div class="pline p-line5"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Corporate Elite</div>
+        <div class="template-meta">
+          <span class="badge badge-success" style="font-size:0.6rem">Business</span>
+          <span class="badge-ats">ATS 93</span>
+          <span class="badge-pro-tag">PRO</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Corporate Elite','Traditional corporate design with strong borders and structured hierarchy. Ideal for business analyst and management roles.','executive','93','pro')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. Fresh Graduate -->
+    <div class="template-card" data-category="all fresher" data-name="Fresh Graduate">
+      <div class="template-preview preview-fresh">
+        <div class="preview-lines">
+          <div class="pline p-accent"></div>
+          <div class="pline p-name"></div>
+          <div class="pline p-contact"></div>
+          <div class="pline p-sec"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-sec2"></div>
+          <div class="pline p-line3"></div>
+          <div class="pline p-line4"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Fresh Graduate</div>
+        <div class="template-meta">
+          <span class="badge badge-primary" style="font-size:0.6rem">Fresher</span>
+          <span class="badge-ats">ATS 95</span>
+          <span class="badge-free">Free</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Fresh Graduate','Clean and simple design with indigo accents. Highlights education and projects for entry-level candidates.','fresher','95','free')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11. AI Engineer -->
+    <div class="template-card" data-category="all ai-ml software-engineer" data-name="AI Engineer">
+      <div class="template-preview preview-ai">
+        <div class="preview-lines">
+          <div class="pline p-left"></div>
+          <div class="pline p-name"></div>
+          <div class="pline p-sub"></div>
+          <div class="pline p-tag1"></div>
+          <div class="pline p-tag2"></div>
+          <div class="pline p-tag3"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-line3"></div>
+          <div class="pline p-sec"></div>
+          <div class="pline p-line4"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">AI Engineer</div>
+        <div class="template-meta">
+          <span class="badge badge-primary" style="font-size:0.6rem">AI / ML</span>
+          <span class="badge-ats">ATS 92</span>
+          <span class="badge-pro-tag">PRO</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('AI Engineer','Gradient left-accent with tech skill tags. Designed for AI/ML engineers with emphasis on technical competencies.','ai-ml','92','pro')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12. Product Leader -->
+    <div class="template-card" data-category="all product-manager" data-name="Product Leader">
+      <div class="template-preview preview-product">
+        <div class="preview-lines">
+          <div class="pline p-header"></div>
+          <div class="pline p-name"></div>
+          <div class="pline p-sub"></div>
+          <div class="pline p-sec"></div>
+          <div class="pline p-box1"></div>
+          <div class="pline p-box2"></div>
+          <div class="pline p-box3"></div>
+          <div class="pline p-line1"></div>
+          <div class="pline p-line2"></div>
+          <div class="pline p-line3"></div>
+        </div>
+      </div>
+      <div class="template-info">
+        <div class="template-name">Product Leader</div>
+        <div class="template-meta">
+          <span class="badge badge-success" style="font-size:0.6rem">Product Manager</span>
+          <span class="badge-ats">ATS 94</span>
+          <span class="badge-pro-tag">PRO</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-primary" onclick="alert('Opening in Resume Builder...')">Use Template</button>
+          <button class="btn-ghost" onclick="openPreview('Product Leader','Amber-accented layout with key results boxes. Designed for product managers to showcase impact metrics.','product-manager','94','pro')">Preview</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="no-results" id="noResults">
+    <div class="no-results-icon">🔍</div>
+    <div>No templates found matching your search.</div>
+  </div>
+</main>
+
+<!-- Preview Modal -->
+<div class="modal-overlay" id="previewModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Template Preview</h2>
+      <button class="modal-close" onclick="closePreview()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-preview" id="modalPreviewArea">
+        <!-- Large preview rendered here -->
+      </div>
+      <div class="modal-meta" id="modalMeta"></div>
+      <p class="modal-desc" id="modalDesc"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closePreview()">Close</button>
+      <button class="btn-primary" onclick="alert('Opening in Resume Builder...');closePreview();">Use This Template</button>
+    </div>
+  </div>
+</div>
+
+<!-- Copilot Widget -->
+<div class="copilot-widget">
+  <button class="copilot-btn" onclick="document.getElementById('copilotPanel').classList.toggle('open')">✨</button>
+  <div class="copilot-panel" id="copilotPanel">
+    <div class="copilot-header">
+      <span style="font-size:1.2rem">🤖</span>
+      <div style="flex:1"><div class="font-semibold" style="font-size:0.9rem">AI Career Copilot</div><div style="font-size:0.65rem;opacity:0.8">● Online</div></div>
+      <button onclick="document.getElementById('copilotPanel').classList.remove('open')" style="background:none;border:none;color:white;cursor:pointer;font-size:1.1rem">✕</button>
+    </div>
+    <div class="copilot-messages" id="copilotMessages">
+      <div class="copilot-msg ai">Hi! 👋 How can I help you today?</div>
+    </div>
+    <div class="copilot-input-area">
+      <input type="text" class="copilot-input" id="copilotInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendMsg()">
+      <button class="copilot-send" onclick="sendMsg()">→</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Theme
+function toggleTheme(){const h=document.documentElement;const n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}
+(function(){const s=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',s);})();
+
+// Copilot
+const aiR=['I can help optimize that for you! Would you like me to suggest improvements?','Great question! Let me analyze your profile and provide recommendations.','Based on your experience, I suggest focusing on quantifiable achievements.','I recommend tailoring your content to match the specific job requirements.'];
+let aI=0;
+function sendMsg(){const i=document.getElementById('copilotInput');const m=i.value.trim();if(!m)return;const c=document.getElementById('copilotMessages');c.innerHTML+='<div class="copilot-msg user">'+m+'</div>';i.value='';c.scrollTop=c.scrollHeight;setTimeout(()=>{c.innerHTML+='<div class="copilot-msg ai">'+aiR[aI%aiR.length]+'</div>';aI++;c.scrollTop=c.scrollHeight;},1000);}
+
+// Filter chips
+const chips = document.querySelectorAll('.chip');
+const cards = document.querySelectorAll('.template-card');
+const searchInput = document.getElementById('searchInput');
+const noResults = document.getElementById('noResults');
+
+let activeFilter = 'all';
+
+chips.forEach(chip => {
+  chip.addEventListener('click', () => {
+    chips.forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilter = chip.dataset.filter;
+    applyFilters();
+  });
+});
+
+searchInput.addEventListener('input', applyFilters);
+
+function applyFilters() {
+  const query = searchInput.value.trim().toLowerCase();
+  let visibleCount = 0;
+
+  cards.forEach(card => {
+    const categories = card.dataset.category;
+    const name = card.dataset.name.toLowerCase();
+
+    const matchesFilter = activeFilter === 'all' || categories.includes(activeFilter);
+    const matchesSearch = !query || name.includes(query);
+
+    if (matchesFilter && matchesSearch) {
+      card.style.display = '';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+}
+
+// Preview modal
+const previewStyles = {
+  'Classic Professional': `
+    <div style="position:absolute;top:0;left:0;right:0;height:48px;background:#3b82f6;border-radius:6px 6px 0 0"></div>
+    <div style="position:absolute;top:56px;left:24px;height:10px;width:55%;background:#1e293b;border-radius:2px"></div>
+    <div style="position:absolute;top:72px;left:24px;height:6px;width:70%;background:#94a3b8;border-radius:2px"></div>
+    <div style="position:absolute;top:96px;left:24px;right:24px;height:6px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:108px;left:24px;right:40px;height:6px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:120px;left:24px;right:60px;height:6px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:142px;left:24px;height:6px;width:35%;background:#3b82f6;opacity:0.5;border-radius:2px"></div>
+    <div style="position:absolute;top:160px;left:24px;right:24px;height:6px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:172px;left:24px;right:36px;height:6px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:184px;left:24px;right:50px;height:6px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:206px;left:24px;height:6px;width:30%;background:#3b82f6;opacity:0.5;border-radius:2px"></div>
+    <div style="position:absolute;top:224px;left:24px;right:24px;height:6px;background:#f1f5f9;border-radius:2px"></div>
+    <div style="position:absolute;top:236px;left:24px;right:30px;height:6px;background:#f1f5f9;border-radius:2px"></div>
+  `,
+  'Modern Minimal': `
+    <div style="position:absolute;top:0;left:0;bottom:0;width:6px;background:#8b5cf6;border-radius:6px 0 0 6px"></div>
+    <div style="position:absolute;top:28px;left:28px;height:12px;width:45%;background:#1e293b;border-radius:2px"></div>
+    <div style="position:absolute;top:48px;left:28px;height:6px;width:30%;background:#94a3b8;border-radius:2px"></div>
+    <div style="position:absolute;top:72px;left:28px;right:24px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:83px;left:28px;right:36px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:106px;left:28px;height:5px;width:25%;background:#8b5cf6;border-radius:2px"></div>
+    <div style="position:absolute;top:120px;left:28px;right:24px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:131px;left:28px;right:40px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:142px;left:28px;right:30px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:165px;left:28px;height:5px;width:22%;background:#8b5cf6;border-radius:2px"></div>
+    <div style="position:absolute;top:179px;left:28px;right:24px;height:5px;background:#f1f5f9;border-radius:2px"></div>
+    <div style="position:absolute;top:190px;left:28px;right:32px;height:5px;background:#f1f5f9;border-radius:2px"></div>
+  `,
+  'Executive Bold': `
+    <div style="position:absolute;top:0;left:0;right:0;height:64px;background:#1e293b;border-radius:6px 6px 0 0"></div>
+    <div style="position:absolute;top:18px;left:24px;height:10px;width:40%;background:#f8fafc;border-radius:2px"></div>
+    <div style="position:absolute;top:36px;left:24px;height:6px;width:25%;background:rgba(248,250,252,0.5);border-radius:2px"></div>
+    <div style="position:absolute;top:80px;left:24px;right:24px;height:6px;background:#cbd5e1;border-radius:2px"></div>
+    <div style="position:absolute;top:92px;left:24px;right:36px;height:6px;background:#cbd5e1;border-radius:2px"></div>
+    <div style="position:absolute;top:114px;left:24px;right:24px;height:6px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:126px;left:24px;right:40px;height:6px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:148px;left:24px;height:4px;width:30%;background:#f59e0b;border-radius:2px"></div>
+    <div style="position:absolute;top:164px;left:24px;right:24px;height:6px;background:#f1f5f9;border-radius:2px"></div>
+    <div style="position:absolute;top:176px;left:24px;right:30px;height:6px;background:#f1f5f9;border-radius:2px"></div>
+  `,
+  'Tech Stack': `
+    <div style="position:absolute;top:0;left:0;bottom:0;width:38%;background:#0f172a;border-radius:6px 0 0 6px"></div>
+    <div style="position:absolute;top:24px;left:16px;height:8px;width:20%;background:#38bdf8;border-radius:2px"></div>
+    <div style="position:absolute;top:46px;left:16px;height:8px;width:18%;background:rgba(56,189,248,0.3);border-radius:4px"></div>
+    <div style="position:absolute;top:60px;left:16px;height:8px;width:14%;background:rgba(56,189,248,0.3);border-radius:4px"></div>
+    <div style="position:absolute;top:74px;left:16px;height:8px;width:22%;background:rgba(56,189,248,0.3);border-radius:4px"></div>
+    <div style="position:absolute;top:88px;left:16px;height:8px;width:16%;background:rgba(56,189,248,0.3);border-radius:4px"></div>
+    <div style="position:absolute;top:24px;left:42%;height:8px;width:30%;background:#1e293b;border-radius:2px"></div>
+    <div style="position:absolute;top:44px;left:42%;right:24px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:55px;left:42%;right:36px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:66px;left:42%;right:28px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:90px;left:42%;height:8px;width:25%;background:#1e293b;border-radius:2px"></div>
+    <div style="position:absolute;top:110px;left:42%;right:24px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:121px;left:42%;right:32px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+  `,
+  'Creative Flow': `
+    <div style="position:absolute;top:0;left:0;right:0;height:56px;background:linear-gradient(135deg,#ec4899,#f97316);border-radius:6px 6px 0 0"></div>
+    <div style="position:absolute;top:14px;left:50%;transform:translateX(-50%);height:10px;width:35%;background:rgba(255,255,255,0.9);border-radius:2px"></div>
+    <div style="position:absolute;top:30px;left:50%;transform:translateX(-50%);height:6px;width:22%;background:rgba(255,255,255,0.6);border-radius:2px"></div>
+    <div style="position:absolute;top:72px;left:24px;right:24px;height:6px;background:#fecdd3;border-radius:2px"></div>
+    <div style="position:absolute;top:84px;left:24px;right:36px;height:6px;background:#fecdd3;border-radius:2px"></div>
+    <div style="position:absolute;top:106px;left:24px;height:6px;width:28%;background:#ec4899;opacity:0.6;border-radius:2px"></div>
+    <div style="position:absolute;top:122px;left:24px;right:24px;height:6px;background:#fce7f3;border-radius:2px"></div>
+    <div style="position:absolute;top:134px;left:24px;right:40px;height:6px;background:#fce7f3;border-radius:2px"></div>
+  `,
+  'Academic Research': `
+    <div style="position:absolute;top:24px;left:50%;transform:translateX(-50%);height:12px;width:50%;background:#1e293b;border-radius:2px"></div>
+    <div style="position:absolute;top:44px;left:50%;transform:translateX(-50%);height:6px;width:35%;background:#64748b;border-radius:2px"></div>
+    <div style="position:absolute;top:62px;left:30px;right:30px;height:1px;background:#1e293b"></div>
+    <div style="position:absolute;top:76px;left:24px;height:6px;width:32%;background:#475569;border-radius:2px"></div>
+    <div style="position:absolute;top:92px;left:24px;right:24px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:103px;left:24px;right:32px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:114px;left:24px;right:24px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:136px;left:24px;height:6px;width:28%;background:#475569;border-radius:2px"></div>
+    <div style="position:absolute;top:152px;left:24px;right:28px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:163px;left:24px;right:24px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+  `,
+  'Data Analyst Pro': `
+    <div style="position:absolute;top:0;left:0;right:0;height:36px;background:#059669;border-radius:6px 6px 0 0"></div>
+    <div style="position:absolute;top:10px;left:20px;height:8px;width:35%;background:#fff;border-radius:2px"></div>
+    <div style="position:absolute;top:48px;left:16px;width:44%;height:52px;border:1px solid #d1d5db;border-radius:6px"></div>
+    <div style="position:absolute;top:48px;right:16px;width:44%;height:52px;border:1px solid #d1d5db;border-radius:6px"></div>
+    <div style="position:absolute;top:66px;left:24px;height:4px;width:18%;background:#059669;opacity:0.5;border-radius:2px"></div>
+    <div style="position:absolute;top:66px;right:24px;height:4px;width:18%;background:#059669;opacity:0.5;border-radius:2px"></div>
+    <div style="position:absolute;top:118px;left:16px;right:16px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:129px;left:16px;right:28px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:150px;left:16px;height:5px;width:25%;background:#059669;opacity:0.5;border-radius:2px"></div>
+    <div style="position:absolute;top:165px;left:16px;right:20px;height:5px;background:#f1f5f9;border-radius:2px"></div>
+  `,
+  'Startup Ready': `
+    <div style="position:absolute;top:32px;left:24px;height:10px;width:38%;background:#1e293b;border-radius:2px"></div>
+    <div style="position:absolute;top:56px;left:24px;right:24px;height:4px;background:#f1f5f9;border-radius:2px"></div>
+    <div style="position:absolute;top:66px;left:24px;right:40px;height:4px;background:#f1f5f9;border-radius:2px"></div>
+    <div style="position:absolute;top:86px;left:24px;right:24px;height:1px;background:#e2e8f0"></div>
+    <div style="position:absolute;top:100px;left:24px;right:24px;height:4px;background:#f1f5f9;border-radius:2px"></div>
+    <div style="position:absolute;top:110px;left:24px;right:30px;height:4px;background:#f1f5f9;border-radius:2px"></div>
+    <div style="position:absolute;top:130px;left:24px;right:24px;height:1px;background:#e2e8f0"></div>
+    <div style="position:absolute;top:144px;left:24px;right:24px;height:4px;background:#f1f5f9;border-radius:2px"></div>
+    <div style="position:absolute;top:154px;left:24px;right:36px;height:4px;background:#f1f5f9;border-radius:2px"></div>
+  `,
+  'Corporate Elite': `
+    <div style="position:absolute;inset:0;border:3px solid #1e293b;border-radius:6px"></div>
+    <div style="position:absolute;top:22px;left:20px;height:10px;width:42%;background:#0f172a;border-radius:2px"></div>
+    <div style="position:absolute;top:40px;left:20px;height:6px;width:28%;background:#94a3b8;border-radius:2px"></div>
+    <div style="position:absolute;top:58px;left:0;right:0;height:3px;background:#0f172a"></div>
+    <div style="position:absolute;top:76px;left:20px;right:20px;height:5px;background:#cbd5e1;border-radius:2px"></div>
+    <div style="position:absolute;top:87px;left:20px;right:30px;height:5px;background:#cbd5e1;border-radius:2px"></div>
+    <div style="position:absolute;top:98px;left:20px;right:20px;height:5px;background:#cbd5e1;border-radius:2px"></div>
+    <div style="position:absolute;top:118px;left:20px;right:20px;height:1px;background:#0f172a;opacity:0.3"></div>
+    <div style="position:absolute;top:132px;left:20px;right:20px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:143px;left:20px;right:32px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+  `,
+  'Fresh Graduate': `
+    <div style="position:absolute;top:0;left:0;right:0;height:5px;background:#6366f1;border-radius:6px 6px 0 0"></div>
+    <div style="position:absolute;top:24px;left:20px;height:10px;width:40%;background:#1e293b;border-radius:2px"></div>
+    <div style="position:absolute;top:42px;left:20px;height:5px;width:55%;background:#94a3b8;border-radius:2px"></div>
+    <div style="position:absolute;top:64px;left:20px;height:5px;width:22%;background:#6366f1;opacity:0.6;border-radius:2px"></div>
+    <div style="position:absolute;top:80px;left:20px;right:20px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:91px;left:20px;right:32px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:114px;left:20px;height:5px;width:18%;background:#6366f1;opacity:0.6;border-radius:2px"></div>
+    <div style="position:absolute;top:130px;left:20px;right:20px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:141px;left:20px;right:40px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:164px;left:20px;height:5px;width:20%;background:#6366f1;opacity:0.6;border-radius:2px"></div>
+    <div style="position:absolute;top:180px;left:20px;right:20px;height:5px;background:#f1f5f9;border-radius:2px"></div>
+  `,
+  'AI Engineer': `
+    <div style="position:absolute;top:0;left:0;bottom:0;width:8px;background:linear-gradient(180deg,#0ea5e9,#8b5cf6);border-radius:6px 0 0 6px"></div>
+    <div style="position:absolute;top:24px;left:28px;height:10px;width:40%;background:#0ea5e9;border-radius:2px"></div>
+    <div style="position:absolute;top:42px;left:28px;height:6px;width:30%;background:#94a3b8;border-radius:2px"></div>
+    <div style="position:absolute;top:62px;left:28px;height:14px;width:16%;background:rgba(14,165,233,0.2);border-radius:6px"></div>
+    <div style="position:absolute;top:62px;left:48%;height:14px;width:14%;background:rgba(139,92,246,0.2);border-radius:6px"></div>
+    <div style="position:absolute;top:62px;left:66%;height:14px;width:18%;background:rgba(14,165,233,0.2);border-radius:6px"></div>
+    <div style="position:absolute;top:94px;left:28px;right:20px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:105px;left:28px;right:32px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:116px;left:28px;right:24px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:138px;left:28px;height:5px;width:20%;background:#8b5cf6;border-radius:2px"></div>
+    <div style="position:absolute;top:154px;left:28px;right:24px;height:5px;background:#f1f5f9;border-radius:2px"></div>
+    <div style="position:absolute;top:165px;left:28px;right:30px;height:5px;background:#f1f5f9;border-radius:2px"></div>
+  `,
+  'Product Leader': `
+    <div style="position:absolute;top:0;left:0;right:0;height:8px;background:#f59e0b;border-radius:6px 6px 0 0"></div>
+    <div style="position:absolute;top:26px;left:20px;height:10px;width:42%;background:#1e293b;border-radius:2px"></div>
+    <div style="position:absolute;top:44px;left:20px;height:6px;width:55%;background:#94a3b8;border-radius:2px"></div>
+    <div style="position:absolute;top:66px;left:20px;height:5px;width:28%;background:#f59e0b;opacity:0.6;border-radius:2px"></div>
+    <div style="position:absolute;top:82px;left:20px;width:28%;height:32px;border:1px solid #fde68a;border-radius:6px"></div>
+    <div style="position:absolute;top:82px;left:52%;width:28%;height:32px;border:1px solid #fde68a;border-radius:6px"></div>
+    <div style="position:absolute;top:130px;left:20px;right:20px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:141px;left:20px;right:32px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:152px;left:20px;right:20px;height:5px;background:#e2e8f0;border-radius:2px"></div>
+    <div style="position:absolute;top:174px;left:20px;height:5px;width:25%;background:#f59e0b;opacity:0.6;border-radius:2px"></div>
+    <div style="position:absolute;top:190px;left:20px;right:24px;height:5px;background:#f1f5f9;border-radius:2px"></div>
+  `
+};
+
+function openPreview(name, desc, category, ats, tier) {
+  document.getElementById('modalTitle').textContent = name;
+  document.getElementById('modalDesc').textContent = desc;
+
+  const meta = document.getElementById('modalMeta');
+  meta.innerHTML = `
+    <span class="badge badge-primary" style="font-size:0.65rem">${category.replace(/-/g,' ')}</span>
+    <span class="badge-ats">ATS ${ats}</span>
+    <span class="${tier === 'pro' ? 'badge-pro-tag' : 'badge-free'}">${tier === 'pro' ? 'PRO' : 'Free'}</span>
+  `;
+
+  const area = document.getElementById('modalPreviewArea');
+  area.innerHTML = previewStyles[name] || '';
+
+  document.getElementById('previewModal').classList.add('open');
+}
+
+function closePreview() {
+  document.getElementById('previewModal').classList.remove('open');
+}
+
+// Close modal on overlay click
+document.getElementById('previewModal').addEventListener('click', function(e) {
+  if (e.target === this) closePreview();
+});
+
+// Close modal on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closePreview();
+});
+</script>
+</body>
+</html>

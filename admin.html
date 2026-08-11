@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — ResumeAI Pro</title>
+  <meta name="description" content="Manage users, monitor system health, and view platform analytics from the ResumeAI Pro admin panel.">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* ── Admin Badge ── */
+    .admin-badge { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.75rem; vertical-align: middle; }
+
+    /* ── Table Enhancements ── */
+    .table-toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+    .table-search { flex: 1; min-width: 200px; padding: 0.55rem 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-tertiary); color: var(--text-primary); font-size: 0.85rem; outline: none; transition: border-color 0.2s; }
+    .table-search:focus { border-color: var(--primary); }
+    .table-filter { padding: 0.55rem 1rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-tertiary); color: var(--text-primary); font-size: 0.85rem; outline: none; cursor: pointer; }
+    .table-wrapper { overflow-x: auto; }
+    .table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .table th { text-align: left; padding: 0.75rem 0.75rem; color: var(--text-muted); font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-primary); white-space: nowrap; }
+    .table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--border-secondary); color: var(--text-secondary); vertical-align: middle; }
+    .table tr:hover td { background: var(--bg-tertiary); }
+    .table .user-cell { display: flex; align-items: center; gap: 0.6rem; white-space: nowrap; }
+    .table .avatar-sm { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 0.35rem; }
+    .status-dot.active { background: #22c55e; }
+    .status-dot.inactive { background: #ef4444; }
+    .btn-ghost { background: none; border: 1px solid var(--border-primary); color: var(--text-secondary); padding: 0.3rem 0.65rem; border-radius: var(--radius-md); font-size: 0.72rem; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-ghost.danger:hover { border-color: #ef4444; color: #ef4444; }
+    .plan-badge { padding: 0.15rem 0.5rem; border-radius: var(--radius-full, 999px); font-size: 0.68rem; font-weight: 700; }
+    .plan-badge.free { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    .plan-badge.pro { background: rgba(99,102,241,0.15); color: var(--primary); }
+    .plan-badge.enterprise { background: rgba(245,158,11,0.15); color: #f59e0b; }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 0.4rem; margin-top: 1rem; }
+    .page-btn { padding: 0.35rem 0.7rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-tertiary); color: var(--text-secondary); font-size: 0.78rem; cursor: pointer; transition: all 0.2s; font-weight: 600; }
+    .page-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Donut (Admin) ── */
+    .admin-donut-wrapper { display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; justify-content: center; padding: 1.5rem 0; }
+    .admin-donut { width: 180px; height: 180px; border-radius: 50%; position: relative; }
+    .admin-donut-hole { position: absolute; inset: 25%; border-radius: 50%; background: var(--bg-secondary); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .admin-donut-hole .value { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); }
+    .admin-donut-hole .label { font-size: 0.6rem; color: var(--text-muted); }
+    .admin-legend { display: flex; flex-direction: column; gap: 0.75rem; }
+    .admin-legend-item { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; color: var(--text-secondary); }
+    .admin-legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ── System Health ── */
+    .health-card { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); padding: 1.25rem; }
+    .health-title { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600; }
+    .health-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 700; }
+    .health-dot { width: 10px; height: 10px; border-radius: 50%; animation: pulse 2s infinite; }
+    .health-dot.green { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+    .health-dot.yellow { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.5); }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.5} }
+    .storage-bar { height: 8px; border-radius: 4px; background: var(--bg-tertiary); overflow: hidden; margin-top: 0.5rem; }
+    .storage-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #f59e0b, #ef4444); transition: width 1s ease; }
+
+    /* ── Activity Log ── */
+    .activity-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .activity-table th { text-align: left; padding: 0.6rem 0.75rem; color: var(--text-muted); font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-primary); }
+    .activity-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border-secondary); color: var(--text-secondary); }
+    .activity-table tr:hover td { background: var(--bg-tertiary); }
+    .event-badge { padding: 0.15rem 0.5rem; border-radius: var(--radius-full, 999px); font-size: 0.65rem; font-weight: 700; white-space: nowrap; }
+    .event-badge.signup { background: rgba(99,102,241,0.15); color: var(--primary); }
+    .event-badge.upgrade { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .event-badge.create { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .event-badge.publish { background: rgba(168,85,247,0.15); color: #a855f7; }
+    .event-badge.delete { background: rgba(239,68,68,0.15); color: #ef4444; }
+  </style>
+</head>
+<body>
+
+<!-- ───── Sidebar ───── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header"><span style="font-size:1.5rem">🚀</span><span class="sidebar-logo text-gradient">ResumeAI Pro</span></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section"><div class="sidebar-section-title">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="builder.html" class="nav-item"><span class="nav-icon">📝</span> Resume Builder</a>
+      <a href="templates.html" class="nav-item"><span class="nav-icon">🎨</span> Templates</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Optimize</div>
+      <a href="ats-scorer.html" class="nav-item"><span class="nav-icon">📈</span> ATS Score</a>
+      <a href="jd-matcher.html" class="nav-item"><span class="nav-icon">🎯</span> JD Matcher</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-icon">✉️</span> Cover Letter</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Prepare</div>
+      <a href="interview.html" class="nav-item"><span class="nav-icon">🎤</span> Interview Prep</a>
+      <a href="career.html" class="nav-item"><span class="nav-icon">🗺️</span> Career Guide</a>
+      <a href="tracker.html" class="nav-item"><span class="nav-icon">📋</span> Job Tracker</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">Insights</div>
+      <a href="analytics.html" class="nav-item"><span class="nav-icon">📉</span> Analytics</a>
+      <a href="linkedin.html" class="nav-item"><span class="nav-icon">💼</span> LinkedIn</a></div>
+    <div class="sidebar-section"><div class="sidebar-section-title">System</div>
+      <a href="admin.html" class="nav-item active"><span class="nav-icon">⚙️</span> Admin Panel</a></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="flex items-center gap-3" style="margin-bottom:0.75rem"><div class="avatar" style="width:36px;height:36px;font-size:0.75rem">AJ</div><div><div class="font-semibold text-sm">Alex Johnson</div><span class="badge badge-primary" style="font-size:10px">PRO</span></div></div>
+    <button class="theme-toggle w-full" onclick="toggleTheme()" style="cursor:pointer"></button>
+  </div>
+</aside>
+
+<!-- ───── Main Content ───── -->
+<main class="main-content">
+
+  <!-- Header -->
+  <div class="content-header">
+    <div style="display:flex;align-items:center;">
+      <h1 class="page-title">Admin Panel</h1>
+      <span class="admin-badge"><span class="badge badge-primary">Admin</span></span>
+    </div>
+    <p class="page-subtitle">Manage users, subscriptions, and platform settings</p>
+  </div>
+
+  <!-- ── Stats Row ── -->
+  <div class="grid grid-4" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+      <div class="stat-label">Total Users</div>
+      <div class="stat-value">52,847</div>
+      <div class="stat-change positive">↑ +1,240 this month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Today</div>
+      <div class="stat-value">3,241</div>
+      <div class="stat-change positive">↑ +12% vs yesterday</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pro Subscribers</div>
+      <div class="stat-value">8,392</div>
+      <div class="stat-change positive">↑ +340 this month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Revenue</div>
+      <div class="stat-value">$94,520</div>
+      <div class="stat-change positive">↑ +18% MoM</div>
+    </div>
+  </div>
+
+  <!-- ── User Management ── -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header"><h2 class="card-title">👥 User Management</h2></div>
+    <div class="table-toolbar">
+      <input type="text" class="table-search" id="userSearch" placeholder="Search users by name or email..." oninput="filterUsers()">
+      <select class="table-filter" id="planFilter" onchange="filterUsers()">
+        <option value="">All Plans</option>
+        <option value="Free">Free</option>
+        <option value="Pro">Pro</option>
+        <option value="Enterprise">Enterprise</option>
+      </select>
+    </div>
+    <div class="table-wrapper">
+      <table class="table" id="usersTable">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Plan</th>
+            <th>Resumes</th>
+            <th>ATS Score</th>
+            <th>Joined</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersBody">
+          <tr data-plan="Pro">
+            <td><div class="user-cell"><div class="avatar-sm" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">SL</div><span>Sarah Liu</span></div></td>
+            <td>sarah.liu@gmail.com</td>
+            <td><span class="plan-badge pro">Pro</span></td>
+            <td>8</td><td>92</td>
+            <td>Jan 15, 2026</td>
+            <td><span class="status-dot active"></span>Active</td>
+            <td><button class="btn-ghost btn-sm">View</button> <button class="btn-ghost btn-sm danger">Suspend</button></td>
+          </tr>
+          <tr data-plan="Free">
+            <td><div class="user-cell"><div class="avatar-sm" style="background:linear-gradient(135deg,#22c55e,#16a34a)">MR</div><span>Mike Rodriguez</span></div></td>
+            <td>mike.rod@outlook.com</td>
+            <td><span class="plan-badge free">Free</span></td>
+            <td>3</td><td>67</td>
+            <td>Mar 22, 2026</td>
+            <td><span class="status-dot active"></span>Active</td>
+            <td><button class="btn-ghost btn-sm">View</button> <button class="btn-ghost btn-sm danger">Suspend</button></td>
+          </tr>
+          <tr data-plan="Enterprise">
+            <td><div class="user-cell"><div class="avatar-sm" style="background:linear-gradient(135deg,#f59e0b,#d97706)">EP</div><span>Emily Park</span></div></td>
+            <td>emily.p@company.co</td>
+            <td><span class="plan-badge enterprise">Enterprise</span></td>
+            <td>15</td><td>95</td>
+            <td>Nov 3, 2025</td>
+            <td><span class="status-dot active"></span>Active</td>
+            <td><button class="btn-ghost btn-sm">View</button> <button class="btn-ghost btn-sm danger">Suspend</button></td>
+          </tr>
+          <tr data-plan="Pro">
+            <td><div class="user-cell"><div class="avatar-sm" style="background:linear-gradient(135deg,#ec4899,#be185d)">JC</div><span>James Chen</span></div></td>
+            <td>j.chen@techmail.io</td>
+            <td><span class="plan-badge pro">Pro</span></td>
+            <td>6</td><td>81</td>
+            <td>Feb 8, 2026</td>
+            <td><span class="status-dot inactive"></span>Inactive</td>
+            <td><button class="btn-ghost btn-sm">View</button> <button class="btn-ghost btn-sm danger">Suspend</button></td>
+          </tr>
+          <tr data-plan="Free">
+            <td><div class="user-cell"><div class="avatar-sm" style="background:linear-gradient(135deg,#06b6d4,#0891b2)">AN</div><span>Aisha Nkomo</span></div></td>
+            <td>aisha.n@proton.me</td>
+            <td><span class="plan-badge free">Free</span></td>
+            <td>2</td><td>58</td>
+            <td>May 14, 2026</td>
+            <td><span class="status-dot active"></span>Active</td>
+            <td><button class="btn-ghost btn-sm">View</button> <button class="btn-ghost btn-sm danger">Suspend</button></td>
+          </tr>
+          <tr data-plan="Pro">
+            <td><div class="user-cell"><div class="avatar-sm" style="background:linear-gradient(135deg,#a855f7,#7c3aed)">DW</div><span>David Wang</span></div></td>
+            <td>david.w@yahoo.com</td>
+            <td><span class="plan-badge pro">Pro</span></td>
+            <td>11</td><td>89</td>
+            <td>Dec 1, 2025</td>
+            <td><span class="status-dot active"></span>Active</td>
+            <td><button class="btn-ghost btn-sm">View</button> <button class="btn-ghost btn-sm danger">Suspend</button></td>
+          </tr>
+          <tr data-plan="Enterprise">
+            <td><div class="user-cell"><div class="avatar-sm" style="background:linear-gradient(135deg,#ef4444,#dc2626)">LM</div><span>Lisa Martinez</span></div></td>
+            <td>l.martinez@corp.net</td>
+            <td><span class="plan-badge enterprise">Enterprise</span></td>
+            <td>22</td><td>94</td>
+            <td>Sep 18, 2025</td>
+            <td><span class="status-dot active"></span>Active</td>
+            <td><button class="btn-ghost btn-sm">View</button> <button class="btn-ghost btn-sm danger">Suspend</button></td>
+          </tr>
+          <tr data-plan="Free">
+            <td><div class="user-cell"><div class="avatar-sm" style="background:linear-gradient(135deg,#64748b,#475569)">TK</div><span>Tom Kim</span></div></td>
+            <td>tom.kim@email.com</td>
+            <td><span class="plan-badge free">Free</span></td>
+            <td>1</td><td>45</td>
+            <td>Jun 20, 2026</td>
+            <td><span class="status-dot inactive"></span>Inactive</td>
+            <td><button class="btn-ghost btn-sm">View</button> <button class="btn-ghost btn-sm danger">Suspend</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination">
+      <button class="page-btn" disabled>← Previous</button>
+      <button class="page-btn active" onclick="goToPage(1)">1</button>
+      <button class="page-btn" onclick="goToPage(2)">2</button>
+      <button class="page-btn" onclick="goToPage(3)">3</button>
+      <button class="page-btn" onclick="goToPage(0)">Next →</button>
+    </div>
+  </div>
+
+  <!-- ── Subscription Analytics & System Health ── -->
+  <div class="grid grid-2" style="margin-bottom:1.5rem;">
+
+    <!-- Subscription Donut -->
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">📊 Subscription Analytics</h2></div>
+      <div class="admin-donut-wrapper">
+        <div class="admin-donut" style="background: conic-gradient(#94a3b8 0% 60%, var(--primary) 60% 90%, #f59e0b 90% 100%);">
+          <div class="admin-donut-hole">
+            <div class="value">52.8K</div>
+            <div class="label">Total Users</div>
+          </div>
+        </div>
+        <div class="admin-legend">
+          <div class="admin-legend-item"><span class="admin-legend-dot" style="background:#94a3b8"></span> Free — 60% (31,708)</div>
+          <div class="admin-legend-item"><span class="admin-legend-dot" style="background:var(--primary)"></span> Pro — 30% (15,854)</div>
+          <div class="admin-legend-item"><span class="admin-legend-dot" style="background:#f59e0b"></span> Enterprise — 10% (5,285)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Health -->
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">💚 System Health</h2></div>
+      <div class="grid grid-2" style="gap:0.75rem;padding-top:0.5rem;">
+        <div class="health-card">
+          <div class="health-title">API Gateway</div>
+          <div class="health-status"><span class="health-dot green"></span> <span style="color:#22c55e">Online</span></div>
+        </div>
+        <div class="health-card">
+          <div class="health-title">AI Models</div>
+          <div class="health-status"><span class="health-dot green"></span> <span style="color:#22c55e">Operational</span></div>
+        </div>
+        <div class="health-card">
+          <div class="health-title">Database</div>
+          <div class="health-status"><span class="health-dot green"></span> <span style="color:#22c55e">Healthy</span></div>
+        </div>
+        <div class="health-card">
+          <div class="health-title">Storage</div>
+          <div class="health-status" style="color:#f59e0b">67% Used</div>
+          <div class="storage-bar"><div class="storage-fill" style="width:67%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Recent Activity Log ── -->
+  <div class="card">
+    <div class="card-header"><h2 class="card-title">📜 Recent Activity Log</h2></div>
+    <div class="table-wrapper">
+      <table class="activity-table">
+        <thead>
+          <tr><th>Timestamp</th><th>Event</th><th>User</th><th>Details</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Jun 27, 5:02 PM</td>
+            <td><span class="event-badge signup">User Signed Up</span></td>
+            <td>Tom Kim</td>
+            <td>Free plan registration via Google OAuth</td>
+          </tr>
+          <tr>
+            <td>Jun 27, 4:48 PM</td>
+            <td><span class="event-badge upgrade">Plan Upgraded</span></td>
+            <td>David Wang</td>
+            <td>Upgraded from Free to Pro (annual billing)</td>
+          </tr>
+          <tr>
+            <td>Jun 27, 4:31 PM</td>
+            <td><span class="event-badge create">Resume Created</span></td>
+            <td>Sarah Liu</td>
+            <td>Created "Product Manager - Google" resume</td>
+          </tr>
+          <tr>
+            <td>Jun 27, 3:55 PM</td>
+            <td><span class="event-badge publish">Template Published</span></td>
+            <td>Admin</td>
+            <td>Published "Executive Modern" template to gallery</td>
+          </tr>
+          <tr>
+            <td>Jun 27, 3:22 PM</td>
+            <td><span class="event-badge create">Resume Created</span></td>
+            <td>Emily Park</td>
+            <td>Created "VP Engineering - Series C Startup" resume</td>
+          </tr>
+          <tr>
+            <td>Jun 27, 2:58 PM</td>
+            <td><span class="event-badge signup">User Signed Up</span></td>
+            <td>Aisha Nkomo</td>
+            <td>Free plan registration via email</td>
+          </tr>
+          <tr>
+            <td>Jun 27, 2:14 PM</td>
+            <td><span class="event-badge upgrade">Plan Upgraded</span></td>
+            <td>Lisa Martinez</td>
+            <td>Upgraded from Pro to Enterprise (team of 5)</td>
+          </tr>
+          <tr>
+            <td>Jun 27, 1:45 PM</td>
+            <td><span class="event-badge delete">Account Deleted</span></td>
+            <td>Ryan Foster</td>
+            <td>User requested account deletion (GDPR)</td>
+          </tr>
+          <tr>
+            <td>Jun 27, 1:12 PM</td>
+            <td><span class="event-badge create">Resume Created</span></td>
+            <td>James Chen</td>
+            <td>Created "Senior Backend Engineer" resume</td>
+          </tr>
+          <tr>
+            <td>Jun 27, 12:30 PM</td>
+            <td><span class="event-badge publish">Template Published</span></td>
+            <td>Admin</td>
+            <td>Published "Creative Portfolio" template to gallery</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- ───── Copilot Widget ───── -->
+<div class="copilot-widget"><button class="copilot-btn" onclick="document.getElementById('copilotPanel').classList.toggle('open')">✨</button><div class="copilot-panel" id="copilotPanel"><div class="copilot-header"><span style="font-size:1.2rem">🤖</span><div style="flex:1"><div class="font-semibold" style="font-size:0.9rem">AI Copilot</div><div style="font-size:0.65rem;opacity:0.8">● Online</div></div><button onclick="document.getElementById('copilotPanel').classList.remove('open')" style="background:none;border:none;color:white;cursor:pointer">✕</button></div><div class="copilot-messages" id="copilotMessages"><div class="copilot-msg ai">Hi! 👋 How can I help?</div></div><div class="copilot-input-area"><input class="copilot-input" id="copilotInput" placeholder="Ask anything..." onkeydown="if(event.key==='Enter')sendMsg()"><button class="copilot-send" onclick="sendMsg()">→</button></div></div></div>
+
+<!-- ───── Scripts ───── -->
+<script>
+function toggleTheme(){const h=document.documentElement,n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();
+const aiR=['Great insight!','I can help with that.','Here are my recommendations.','Let me look into that for you.'];let aI=0;
+function sendMsg(){const i=document.getElementById('copilotInput'),m=i.value.trim();if(!m)return;const c=document.getElementById('copilotMessages');c.innerHTML+='<div class="copilot-msg user">'+m+'</div>';i.value='';c.scrollTop=c.scrollHeight;setTimeout(()=>{c.innerHTML+='<div class="copilot-msg ai">'+aiR[aI++%aiR.length]+'</div>';c.scrollTop=c.scrollHeight},1000)}
+
+/* ── User search & filter ── */
+function filterUsers() {
+  const query = document.getElementById('userSearch').value.toLowerCase();
+  const plan = document.getElementById('planFilter').value;
+  const rows = document.querySelectorAll('#usersBody tr');
+
+  rows.forEach(row => {
+    const name = row.querySelector('.user-cell span')?.textContent.toLowerCase() || '';
+    const email = row.children[1]?.textContent.toLowerCase() || '';
+    const rowPlan = row.getAttribute('data-plan') || '';
+
+    const matchesSearch = !query || name.includes(query) || email.includes(query);
+    const matchesPlan = !plan || rowPlan === plan;
+
+    row.style.display = (matchesSearch && matchesPlan) ? '' : 'none';
+  });
+}
+
+/* ── Pagination simulation ── */
+function goToPage(num) {
+  if (num === 0) return; // "Next" placeholder
+  document.querySelectorAll('.page-btn').forEach(btn => btn.classList.remove('active'));
+  const btns = document.querySelectorAll('.page-btn');
+  if (num >= 1 && num <= 3) btns[num].classList.add('active');
+  // Enable/disable prev/next
+  btns[0].disabled = (num === 1);
+  btns[btns.length - 1].disabled = (num === 3);
+}
+</script>
+</body>
+</html>
