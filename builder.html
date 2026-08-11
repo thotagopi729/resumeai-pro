@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resume Builder – ResumeAI Pro</title>
 <link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/ai-copilot.css">
 <style>
 .builder-layout { display: flex; height: calc(100vh - var(--header-height)); overflow: hidden; }
 .editor-pane { width: 50%; overflow-y: auto; padding: 1.5rem; border-right: 1px solid var(--border-primary); }
@@ -666,5 +667,6 @@ function sendMsg(){const i=document.getElementById('copilotInput'),m=i.value.tri
 // Initial render
 updatePreview();
 </script>
+<script src="js/ai-copilot.js"></script>
 </body>
 </html>

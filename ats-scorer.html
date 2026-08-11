@@ -6,39 +6,72 @@
   <title>ATS Score Analyzer — ResumeAI Pro</title>
   <meta name="description" content="Analyze your resume's ATS compatibility score. Get actionable feedback to improve your resume and pass applicant tracking systems.">
   <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/ai-copilot.css">
   <style>
+    /* CSS fallback map for tokens */
+    :root {
+      --card-bg: var(--surface-card, #1e1f2e);
+      --border: var(--border-primary, rgba(255, 255, 255, 0.12));
+      --primary: var(--primary-500, #6366f1);
+      --primary-hover: var(--primary-400, #818cf8);
+    }
+
     .ats-header { margin-bottom: 2rem; }
-    .ats-header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .ats-header h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .ats-header p { color: var(--text-tertiary); font-size: 0.9rem; }
 
     /* Upload Area */
     .upload-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-xl);
       padding: 2.5rem;
       text-align: center;
-      max-width: 600px;
+      max-width: 680px;
       margin: 0 auto;
+      box-shadow: var(--shadow-lg);
     }
     .upload-zone {
-      border: 2px dashed var(--border);
-      border-radius: 12px;
+      border: 2px dashed var(--primary-500);
+      border-radius: var(--radius-lg);
       padding: 2.5rem 1.5rem;
       margin-bottom: 1.5rem;
       cursor: pointer;
-      transition: all 0.3s;
+      background: rgba(99, 102, 241, 0.04);
+      transition: all var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    .upload-zone:hover {
-      border-color: var(--primary);
-      background: rgba(99,102,241,0.05);
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent-500);
+      background: rgba(99, 102, 241, 0.12);
+      transform: scale(1.01);
     }
-    .upload-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
-    .upload-text { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem; }
-    .upload-hint { color: var(--text-secondary); font-size: 0.75rem; opacity: 0.6; }
+    .upload-icon { font-size: 3rem; margin-bottom: 0.75rem; filter: drop-shadow(0 4px 10px rgba(99,102,241,0.3)); }
+    .upload-text { color: var(--text-primary); font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .upload-hint { color: var(--text-tertiary); font-size: 0.8rem; }
+    
+    .file-details-badge {
+      display: none;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-5);
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--success-500);
+      border-radius: var(--radius-md);
+      color: var(--success-400);
+      font-weight: 600;
+      margin-top: var(--space-3);
+      font-size: var(--text-sm);
+    }
+
     .upload-or {
-      color: var(--text-secondary);
+      color: var(--text-tertiary);
       font-size: 0.8rem;
-      margin: 1.25rem 0;
+      font-weight: 700;
+      margin: 1.5rem 0;
       display: flex;
       align-items: center;
       gap: 1rem;
@@ -47,27 +80,52 @@
       content: '';
       flex: 1;
       height: 1px;
-      background: var(--border);
+      background: var(--border-primary);
     }
+    
+    .btn-row {
+      display: flex;
+      gap: var(--space-3);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
     .btn-analyze {
-      padding: 0.75rem 2rem;
-      background: var(--primary);
+      padding: 0.85rem 2rem;
+      background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
       color: #fff;
       border: none;
-      border-radius: 10px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+      transition: all var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-analyze:hover { filter: brightness(1.15); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
+
+    .btn-select-file {
+      padding: 0.85rem 1.75rem;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
       font-weight: 600;
       font-size: 0.95rem;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
     }
-    .btn-analyze:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .btn-select-file:hover { border-color: var(--primary-400); color: var(--primary-400); }
 
     /* Loading Overlay */
     .loading-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(6px);
+      background: rgba(15, 17, 26, 0.85);
+      backdrop-filter: blur(8px);
       z-index: 1000;
       display: none;
       align-items: center;
@@ -77,15 +135,15 @@
     }
     .loading-overlay.active { display: flex; }
     .spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid var(--border);
-      border-top-color: var(--primary);
+      width: 54px;
+      height: 54px;
+      border: 4px solid var(--border-primary);
+      border-top-color: var(--primary-500);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { color: #fff; font-size: 1rem; font-weight: 500; }
+    .loading-text { color: #fff; font-size: 1.1rem; font-weight: 700; }
 
     /* Results Layout */
     .results-container {
@@ -100,7 +158,7 @@
 
     .results-grid {
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 300px 1fr;
       gap: 1.5rem;
       align-items: start;
     }
@@ -111,23 +169,23 @@
       top: 1.5rem;
     }
     .score-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-xl);
       padding: 1.75rem;
       text-align: center;
     }
     .score-circle-wrap {
       position: relative;
-      width: 160px;
-      height: 160px;
+      width: 170px;
+      height: 170px;
       margin: 0 auto 1rem;
     }
     .score-circle-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-    .score-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+    .score-bg { fill: none; stroke: var(--bg-tertiary); stroke-width: 10; }
     .score-fg {
       fill: none;
-      stroke-width: 8;
+      stroke-width: 10;
       stroke-linecap: round;
       transition: stroke-dashoffset 1.5s ease, stroke 0.5s ease;
     }
@@ -140,22 +198,22 @@
       justify-content: center;
     }
     .score-number {
-      font-size: 2.5rem;
-      font-weight: 700;
+      font-size: 2.75rem;
+      font-weight: 900;
       color: var(--text-primary);
       line-height: 1;
     }
     .score-label {
       font-size: 0.75rem;
-      color: var(--text-secondary);
+      color: var(--text-tertiary);
       margin-top: 0.25rem;
     }
     .grade-badge {
       display: inline-block;
       font-size: 1.5rem;
-      font-weight: 700;
-      padding: 0.35rem 1rem;
-      border-radius: 8px;
+      font-weight: 800;
+      padding: 0.35rem 1.25rem;
+      border-radius: var(--radius-md);
       margin-bottom: 1rem;
     }
     .grade-b {
@@ -166,108 +224,91 @@
       background: rgba(16,185,129,0.15);
       color: #10b981;
     }
-    .btn-improve {
+    .btn-reupload {
       width: 100%;
-      padding: 0.6rem;
+      padding: 0.65rem;
       background: transparent;
-      color: var(--primary);
-      border: 1px solid var(--primary);
-      border-radius: 8px;
+      color: var(--primary-400);
+      border: 1px solid var(--primary-500);
+      border-radius: var(--radius-md);
       font-weight: 600;
       font-size: 0.85rem;
       cursor: pointer;
       transition: all 0.2s;
     }
-    .btn-improve:hover { background: var(--primary); color: #fff; }
+    .btn-reupload:hover { background: var(--primary-500); color: #fff; }
 
     /* Details Column */
     .detail-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.25rem 1.5rem;
+      background: var(--surface-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-xl);
+      padding: 1.5rem;
       margin-bottom: 1.25rem;
     }
     .detail-card-title {
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1.05rem;
+      font-weight: 700;
       margin-bottom: 1rem;
       color: var(--text-primary);
     }
 
     /* Progress Bars */
     .score-item {
-      margin-bottom: 0.85rem;
+      margin-bottom: 0.9rem;
     }
     .score-item:last-child { margin-bottom: 0; }
     .score-item-header {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 0.3rem;
-      font-size: 0.8rem;
+      margin-bottom: 0.35rem;
+      font-size: 0.85rem;
     }
-    .score-item-label { color: var(--text-secondary); }
-    .score-item-value { font-weight: 600; color: var(--text-primary); }
+    .score-item-label { color: var(--text-secondary); font-weight: 500; }
+    .score-item-value { font-weight: 700; color: var(--text-primary); }
     .progress-bar {
-      height: 6px;
-      background: var(--border);
-      border-radius: 3px;
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
       overflow: hidden;
     }
     .progress-fill {
       height: 100%;
-      border-radius: 3px;
+      border-radius: 4px;
       width: 0;
       transition: width 1.2s ease;
     }
     .fill-green { background: linear-gradient(90deg, #10b981, #34d399); }
     .fill-yellow { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-    .fill-orange { background: linear-gradient(90deg, #f97316, #fb923c); }
 
     /* Issues */
     .issue-item {
       display: flex;
       align-items: flex-start;
-      gap: 0.65rem;
-      padding: 0.7rem 0;
-      border-bottom: 1px solid var(--border);
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-primary);
       font-size: 0.85rem;
     }
     .issue-item:last-child { border-bottom: none; }
-    .issue-icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .issue-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
     .issue-text { flex: 1; color: var(--text-secondary); line-height: 1.5; }
     .issue-btn {
-      padding: 0.3rem 0.7rem;
-      font-size: 0.7rem;
-      border-radius: 6px;
+      padding: 0.35rem 0.8rem;
+      font-size: 0.75rem;
+      border-radius: var(--radius-sm);
       border: none;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.2s;
       flex-shrink: 0;
     }
     .issue-btn-fix {
-      background: var(--primary);
+      background: var(--primary-500);
       color: #fff;
     }
     .issue-btn-fix:hover { filter: brightness(1.15); }
-    .issue-btn-add {
-      background: rgba(99,102,241,0.15);
-      color: var(--primary);
-    }
-    .issue-btn-add:hover { background: rgba(99,102,241,0.25); }
-
-    /* Strengths */
-    .strength-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-    .strength-icon { font-size: 0.85rem; }
 
     /* Keywords */
     .keyword-cloud {
@@ -276,36 +317,30 @@
       gap: 0.5rem;
     }
     .keyword-badge {
-      padding: 0.35rem 0.75rem;
+      padding: 0.4rem 0.85rem;
       border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 500;
+      font-size: 0.8rem;
+      font-weight: 600;
       background: rgba(245,158,11,0.12);
       color: #fbbf24;
       border: 1px solid rgba(245,158,11,0.25);
-      transition: all 0.2s;
-    }
-    .keyword-badge:hover {
-      background: rgba(245,158,11,0.2);
-      transform: translateY(-1px);
     }
 
     /* Fix All Button */
     .btn-fix-all {
       width: 100%;
-      padding: 0.85rem;
-      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      padding: 0.9rem;
+      background: linear-gradient(135deg, var(--primary-500), #ec4899);
       color: #fff;
       border: none;
-      border-radius: 12px;
-      font-weight: 700;
+      border-radius: var(--radius-lg);
+      font-weight: 800;
       font-size: 1rem;
       cursor: pointer;
       transition: all 0.2s;
-      margin-top: 0.25rem;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.3);
     }
-    .btn-fix-all:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.3); }
-    .btn-fix-all:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-fix-all:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
 
     /* Toast */
     .toast {
@@ -316,8 +351,8 @@
       background: #10b981;
       color: #fff;
       padding: 0.85rem 1.75rem;
-      border-radius: 12px;
-      font-weight: 600;
+      border-radius: var(--radius-lg);
+      font-weight: 700;
       font-size: 0.9rem;
       z-index: 2000;
       box-shadow: 0 8px 24px rgba(16,185,129,0.35);
@@ -329,356 +364,295 @@
       transform: translateX(-50%) translateY(0);
     }
 
-    /* Mobile */
-    .mobile-toggle {
-      display: none;
-      position: fixed;
-      top: 1rem;
-      left: 1rem;
-      z-index: 200;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      color: var(--text-primary);
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      font-size: 1.2rem;
-      cursor: pointer;
-      align-items: center;
-      justify-content: center;
-    }
+    .mobile-toggle { display: none; }
     @media (max-width: 768px) {
-      .mobile-toggle { display: flex; }
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.open { transform: translateX(0); }
-      .main-content { margin-left: 0 !important; }
-      .results-grid {
-        grid-template-columns: 1fr;
-      }
-      .score-column { position: static; }
-    }
-    @media (max-width: 1024px) {
+      .mobile-toggle { display: block; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-primary); }
       .results-grid { grid-template-columns: 1fr; }
       .score-column { position: static; }
-      .score-card { max-width: 320px; margin: 0 auto; }
-    }
-
-    /* Issue fixed state */
-    .issue-item.fixed .issue-text {
-      text-decoration: line-through;
-      opacity: 0.5;
-    }
-    .issue-item.fixed .issue-btn { display: none; }
-    .issue-item.fixed::after {
-      content: '✅';
-      font-size: 0.85rem;
     }
   </style>
 </head>
 <body>
 
-<button class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-header">
-    <span style="font-size:1.5rem">🚀</span>
-    <span class="sidebar-logo text-gradient">ResumeAI Pro</span>
-  </div>
-  <nav class="sidebar-nav">
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Main</div>
-      <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
-      <a href="builder.html" class="nav-item"><span class="nav-icon">📝</span> Resume Builder</a>
-      <a href="templates.html" class="nav-item"><span class="nav-icon">🎨</span> Templates</a>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span style="font-size:1.5rem">🚀</span>
+      <span class="sidebar-logo text-gradient">ResumeAI Pro</span>
     </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Optimize</div>
-      <a href="ats-scorer.html" class="nav-item active"><span class="nav-icon">📈</span> ATS Score</a>
-      <a href="jd-matcher.html" class="nav-item"><span class="nav-icon">🎯</span> JD Matcher</a>
-      <a href="cover-letter.html" class="nav-item"><span class="nav-icon">✉️</span> Cover Letter</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Prepare</div>
-      <a href="interview.html" class="nav-item"><span class="nav-icon">🎤</span> Interview Prep</a>
-      <a href="career.html" class="nav-item"><span class="nav-icon">🗺️</span> Career Guide</a>
-      <a href="tracker.html" class="nav-item"><span class="nav-icon">📋</span> Job Tracker</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Insights</div>
-      <a href="analytics.html" class="nav-item"><span class="nav-icon">📉</span> Analytics</a>
-      <a href="linkedin.html" class="nav-item"><span class="nav-icon">💼</span> LinkedIn</a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">System</div>
-      <a href="admin.html" class="nav-item"><span class="nav-icon">⚙️</span> Admin Panel</a>
-    </div>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="flex items-center gap-3" style="margin-bottom:0.75rem">
-      <div class="avatar" style="width:36px;height:36px;font-size:0.75rem">AJ</div>
-      <div><div class="font-semibold text-sm">Alex Johnson</div><span class="badge badge-primary" style="font-size:10px">PRO</span></div>
-    </div>
-    <button class="theme-toggle w-full" onclick="toggleTheme()" style="cursor:pointer" title="Toggle theme"></button>
-  </div>
-</aside>
-
-<main class="main-content" id="mainContent">
-  <div class="ats-header">
-    <h1>ATS Score Analyzer</h1>
-  </div>
-
-  <!-- Upload State -->
-  <div id="uploadState">
-    <div class="upload-card">
-      <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-        <div class="upload-icon">📄</div>
-        <div class="upload-text">Drop your resume or click to upload</div>
-        <div class="upload-hint">PDF, DOCX, or TXT (Max 5MB)</div>
-        <input type="file" id="fileInput" style="display:none" accept=".pdf,.docx,.txt">
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Main</div>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="builder.html" class="nav-item"><span class="nav-icon">📝</span> Resume Builder</a>
+        <a href="templates.html" class="nav-item"><span class="nav-icon">🎨</span> Templates</a>
       </div>
-      <div class="upload-or">OR</div>
-      <button class="btn-analyze" id="analyzeBtn" onclick="startAnalysis()">Analyze Current Resume</button>
-    </div>
-  </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Optimize</div>
+        <a href="ats-scorer.html" class="nav-item active"><span class="nav-icon">📈</span> ATS Score</a>
+        <a href="jd-matcher.html" class="nav-item"><span class="nav-icon">🎯</span> JD Matcher</a>
+        <a href="cover-letter.html" class="nav-item"><span class="nav-icon">✉️</span> Cover Letter</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Prepare</div>
+        <a href="interview.html" class="nav-item"><span class="nav-icon">🎤</span> Interview Prep</a>
+        <a href="analytics.html" class="nav-item"><span class="nav-icon">📉</span> Analytics</a>
+        <a href="linkedin.html" class="nav-item"><span class="nav-icon">💼</span> LinkedIn</a>
+      </div>
+    </nav>
+  </aside>
 
-  <!-- Loading Overlay -->
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner"></div>
-    <div class="loading-text">Analyzing your resume...</div>
-  </div>
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="app-header">
+      <div style="display:flex; align-items:center; gap:var(--space-3)">
+        <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+        <div>
+          <h1 style="font-size:var(--text-xl); font-weight:800">ATS Score Analyzer & Fixer</h1>
+          <p style="font-size:var(--text-xs); color:var(--text-tertiary)">Upload your resume file or evaluate saved resumes to pass ATS screeners.</p>
+        </div>
+      </div>
+      <button class="theme-btn" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
+    </header>
 
-  <!-- Results -->
-  <div class="results-container" id="resultsContainer">
-    <div class="results-grid">
-
-      <!-- LEFT: Score Column -->
-      <div class="score-column">
-        <div class="score-card">
-          <div class="score-circle-wrap">
-            <svg viewBox="0 0 160 160">
-              <circle class="score-bg" cx="80" cy="80" r="68"></circle>
-              <circle class="score-fg" id="scoreFg" cx="80" cy="80" r="68"
-                stroke="#f59e0b"
-                stroke-dasharray="427.26"
-                stroke-dashoffset="427.26"></circle>
-            </svg>
-            <div class="score-value">
-              <div class="score-number" id="scoreNumber">0</div>
-              <div class="score-label">out of 100</div>
+    <div class="content-body" style="max-width:1200px; margin:0 auto">
+      
+      <!-- Upload Card State -->
+      <div id="uploadState">
+        <div class="upload-card">
+          <div class="upload-zone" id="dropZone" onclick="triggerFileInput()">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text" id="uploadText">Click or Drag & Drop your Resume File Here</div>
+            <div class="upload-hint">Supports PDF, DOCX, or TXT (Up to 5MB)</div>
+            
+            <div class="file-details-badge" id="fileBadge">
+              <span>✅ Selected:</span>
+              <span id="fileNameDisplay">resume.pdf</span>
             </div>
+
+            <input type="file" id="fileInput" style="display:none" accept=".pdf,.docx,.txt" onchange="handleFileSelected(event)">
           </div>
-          <div class="grade-badge grade-b" id="gradeBadge">B+</div>
-          <br>
-          <button class="btn-improve" onclick="scrollToFix()">Improve to A+</button>
+
+          <div class="btn-row">
+            <button class="btn-select-file" onclick="triggerFileInput()">📁 Choose File</button>
+            <button class="btn-analyze" id="analyzeBtn" onclick="startAnalysis()">🚀 Analyze ATS Compatibility</button>
+          </div>
+
+          <div class="upload-or">OR</div>
+          <button class="btn btn-secondary btn-sm" onclick="startAnalysis('saved')">📝 Analyze Currently Saved Resume</button>
         </div>
       </div>
 
-      <!-- RIGHT: Details Column -->
-      <div class="details-column">
-
-        <!-- Category Scores -->
-        <div class="detail-card">
-          <div class="detail-card-title">Category Scores</div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-label">Resume Structure</span>
-              <span class="score-item-value" data-target="92" data-improved="96">92/100</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill fill-green" data-width="92" data-improved="96"></div></div>
-          </div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-label">Keyword Optimization</span>
-              <span class="score-item-value" data-target="65" data-improved="90">65/100</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill fill-yellow" data-width="65" data-improved="90"></div></div>
-          </div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-label">Formatting & Design</span>
-              <span class="score-item-value" data-target="88" data-improved="95">88/100</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill fill-green" data-width="88" data-improved="95"></div></div>
-          </div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-label">Skills Coverage</span>
-              <span class="score-item-value" data-target="72" data-improved="92">72/100</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill fill-yellow" data-width="72" data-improved="92"></div></div>
-          </div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-label">Action Verbs</span>
-              <span class="score-item-value" data-target="58" data-improved="88">58/100</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill fill-orange" data-width="58" data-improved="88"></div></div>
-          </div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-label">Readability</span>
-              <span class="score-item-value" data-target="85" data-improved="95">85/100</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill fill-green" data-width="85" data-improved="95"></div></div>
-          </div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-label">Section Completeness</span>
-              <span class="score-item-value" data-target="70" data-improved="94">70/100</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill fill-yellow" data-width="70" data-improved="94"></div></div>
-          </div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-label">Industry Relevance</span>
-              <span class="score-item-value" data-target="82" data-improved="96">82/100</span>
-            </div>
-            <div class="progress-bar"><div class="progress-fill fill-green" data-width="82" data-improved="96"></div></div>
-          </div>
-        </div>
-
-        <!-- Issues Found -->
-        <div class="detail-card">
-          <div class="detail-card-title">Issues Found</div>
-
-          <div class="issue-item" id="issue1">
-            <span class="issue-icon">🔴</span>
-            <span class="issue-text">Missing quantified achievements in 3 experience bullets</span>
-            <button class="issue-btn issue-btn-fix" onclick="fixIssue('issue1')">Fix Now</button>
-          </div>
-
-          <div class="issue-item" id="issue2">
-            <span class="issue-icon">🔴</span>
-            <span class="issue-text">No strong action verbs in experience descriptions</span>
-            <button class="issue-btn issue-btn-fix" onclick="fixIssue('issue2')">Fix Now</button>
-          </div>
-
-          <div class="issue-item" id="issue3">
-            <span class="issue-icon">🟡</span>
-            <span class="issue-text">Professional summary under 50 words</span>
-            <button class="issue-btn issue-btn-fix" onclick="fixIssue('issue3')">Fix Now</button>
-          </div>
-
-          <div class="issue-item" id="issue4">
-            <span class="issue-icon">🟡</span>
-            <span class="issue-text">Missing certifications section</span>
-            <button class="issue-btn issue-btn-add" onclick="fixIssue('issue4')">Add Section</button>
-          </div>
-
-          <div class="issue-item" id="issue5">
-            <span class="issue-icon">🟢</span>
-            <span class="issue-text">Consider adding volunteer experience</span>
-          </div>
-
-          <div class="issue-item" id="issue6">
-            <span class="issue-icon">🟢</span>
-            <span class="issue-text">Add 3-5 more technical skills</span>
-          </div>
-        </div>
-
-        <!-- Strengths -->
-        <div class="detail-card">
-          <div class="detail-card-title">Strengths</div>
-          <div class="strength-item"><span class="strength-icon">✅</span> Clean single-column ATS-friendly format</div>
-          <div class="strength-item"><span class="strength-icon">✅</span> Professional summary present</div>
-          <div class="strength-item"><span class="strength-icon">✅</span> Education section complete with GPA</div>
-          <div class="strength-item"><span class="strength-icon">✅</span> Contact information complete</div>
-          <div class="strength-item"><span class="strength-icon">✅</span> Standard section headings used</div>
-          <div class="strength-item"><span class="strength-icon">✅</span> Consistent date formatting</div>
-        </div>
-
-        <!-- Missing Keywords -->
-        <div class="detail-card">
-          <div class="detail-card-title">Missing Keywords</div>
-          <div class="keyword-cloud">
-            <span class="keyword-badge">agile</span>
-            <span class="keyword-badge">scrum</span>
-            <span class="keyword-badge">leadership</span>
-            <span class="keyword-badge">cross-functional</span>
-            <span class="keyword-badge">stakeholder management</span>
-            <span class="keyword-badge">data-driven</span>
-            <span class="keyword-badge">scalable architecture</span>
-            <span class="keyword-badge">test-driven development</span>
-          </div>
-        </div>
-
-        <!-- Fix All Button -->
-        <div class="detail-card" id="fixAllCard" style="text-align:center">
-          <button class="btn-fix-all" id="fixAllBtn" onclick="fixAll()">One-Click Fix All ✨</button>
-        </div>
-
+      <!-- Loading Overlay -->
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Scanning resume keywords & formatting...</div>
       </div>
-    </div>
-  </div>
 
-  <!-- Toast -->
-  <div class="toast" id="toast"></div>
-</main>
+      <!-- Results View -->
+      <div class="results-container" id="resultsContainer">
+        <div class="results-grid">
+          
+          <!-- Score Gauge Card -->
+          <div class="score-column">
+            <div class="score-card">
+              <div class="score-circle-wrap">
+                <svg viewBox="0 0 160 160">
+                  <circle class="score-bg" cx="80" cy="80" r="68"></circle>
+                  <circle class="score-fg" id="scoreFg" cx="80" cy="80" r="68" stroke="#f59e0b" stroke-dasharray="427.26" stroke-dashoffset="427.26"></circle>
+                </svg>
+                <div class="score-value">
+                  <div class="score-number" id="scoreNumber">0</div>
+                  <div class="score-label">ATS Score</div>
+                </div>
+              </div>
 
-<!-- Copilot Widget -->
-<div class="copilot-widget">
-  <button class="copilot-btn" onclick="document.getElementById('copilotPanel').classList.toggle('open')">✨</button>
-  <div class="copilot-panel" id="copilotPanel">
-    <div class="copilot-header">
-      <span style="font-size:1.2rem">🤖</span>
-      <div style="flex:1"><div class="font-semibold" style="font-size:0.9rem">AI Career Copilot</div><div style="font-size:0.65rem;opacity:0.8">● Online</div></div>
-      <button onclick="document.getElementById('copilotPanel').classList.remove('open')" style="background:none;border:none;color:white;cursor:pointer;font-size:1.1rem">✕</button>
+              <div class="grade-badge grade-b" id="gradeBadge">B</div>
+              <p style="font-size:var(--text-xs); color:var(--text-tertiary); margin-bottom:var(--space-4)">Good match, but missing 4 key technical keywords.</p>
+              
+              <button class="btn-reupload" onclick="resetToUpload()">🔄 Upload Another Resume</button>
+            </div>
+          </div>
+
+          <!-- Breakdown Details -->
+          <div>
+            
+            <!-- Category Scores -->
+            <div class="detail-card">
+              <div class="detail-card-title">📊 ATS Scoring Breakdown</div>
+              
+              <div class="score-item">
+                <div class="score-item-header">
+                  <span class="score-item-label">Keyword Optimization</span>
+                  <span class="score-item-value" data-improved="92">72/100</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill fill-yellow" data-width="72" data-improved="92"></div>
+                </div>
+              </div>
+
+              <div class="score-item">
+                <div class="score-item-header">
+                  <span class="score-item-label">Formatting & Layout Safety</span>
+                  <span class="score-item-value" data-improved="98">88/100</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill fill-green" data-width="88" data-improved="98"></div>
+                </div>
+              </div>
+
+              <div class="score-item">
+                <div class="score-item-header">
+                  <span class="score-item-label">Quantified Impact Metrics</span>
+                  <span class="score-item-value" data-improved="94">68/100</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill fill-yellow" data-width="68" data-improved="94"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Issues Found -->
+            <div class="detail-card">
+              <div class="detail-card-title">⚠️ Actionable Recommendations</div>
+              
+              <div class="issue-item" id="issue1">
+                <span class="issue-icon">💡</span>
+                <div class="issue-text">Add metric values (%, $, scale) to your bullet points to quantify your experience.</div>
+                <button class="issue-btn issue-btn-fix" onclick="fixIssue('issue1')">Fix Now</button>
+              </div>
+
+              <div class="issue-item" id="issue2">
+                <span class="issue-icon">🔍</span>
+                <div class="issue-text">Include missing hard skills: <strong>TypeScript, Agile, System Architecture</strong>.</div>
+                <button class="issue-btn issue-btn-fix" onclick="fixIssue('issue2')">Add Skills</button>
+              </div>
+            </div>
+
+            <!-- Missing Keywords -->
+            <div class="detail-card">
+              <div class="detail-card-title">🏷️ Missing Keywords for Target Jobs</div>
+              <div class="keyword-cloud">
+                <span class="keyword-badge">+ Agile Methodology</span>
+                <span class="keyword-badge">+ CI/CD Pipelines</span>
+                <span class="keyword-badge">+ System Architecture</span>
+                <span class="keyword-badge">+ Unit Testing</span>
+                <span class="keyword-badge">+ Cross-Functional Leadership</span>
+              </div>
+            </div>
+
+            <!-- One-Click Fix -->
+            <div class="detail-card" style="text-align:center">
+              <button class="btn-fix-all" id="fixAllBtn" onclick="fixAll()">✨ Auto-Fix All Issues (Improve Score to 94%)</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
+
     </div>
-    <div class="copilot-messages" id="copilotMessages">
-      <div class="copilot-msg ai">Hi! 👋 How can I help you today?</div>
-    </div>
-    <div class="copilot-input-area">
-      <input type="text" class="copilot-input" id="copilotInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendMsg()">
-      <button class="copilot-send" onclick="sendMsg()">→</button>
-    </div>
-  </div>
+  </main>
 </div>
 
 <script>
-// Theme
-function toggleTheme(){const h=document.documentElement;const n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);}
-(function(){const s=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',s);})();
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+}
 
-// Copilot
-const aiR=['I can help optimize that for you! Would you like me to suggest improvements?','Great question! Let me analyze your profile and provide recommendations.','Based on your experience, I suggest focusing on quantifiable achievements.','I recommend tailoring your content to match the specific job requirements.'];
-let aI=0;
-function sendMsg(){const i=document.getElementById('copilotInput');const m=i.value.trim();if(!m)return;const c=document.getElementById('copilotMessages');c.innerHTML+='<div class="copilot-msg user">'+m+'</div>';i.value='';c.scrollTop=c.scrollHeight;setTimeout(()=>{c.innerHTML+='<div class="copilot-msg ai">'+aiR[aI%aiR.length]+'</div>';aI++;c.scrollTop=c.scrollHeight;},1000);}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
 
-// Analysis
+function triggerFileInput() {
+  document.getElementById('fileInput').click();
+}
+
+function handleFileSelected(event) {
+  const file = event.target.files[0];
+  if (file) {
+    displaySelectedFile(file);
+  }
+}
+
+function displaySelectedFile(file) {
+  const badge = document.getElementById('fileBadge');
+  const nameDisp = document.getElementById('fileNameDisplay');
+  const text = document.getElementById('uploadText');
+  
+  nameDisp.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+  badge.style.display = 'inline-flex';
+  text.textContent = "File Ready for ATS Analysis!";
+}
+
+// Drag and Drop Handling
+const dropZone = document.getElementById('dropZone');
+
+['dragenter', 'dragover'].forEach(eventName => {
+  dropZone.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  }, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+  dropZone.addEventListener(eventName, (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+  }, false);
+});
+
+dropZone.addEventListener('drop', (e) => {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  if (files.length > 0) {
+    document.getElementById('fileInput').files = files;
+    displaySelectedFile(files[0]);
+  }
+});
+
+// Analysis execution
 const circumference = 2 * Math.PI * 68; // ~427.26
-let currentScore = 78;
 
-function startAnalysis() {
+function startAnalysis(mode) {
+  const fileInput = document.getElementById('fileInput');
+  if (mode !== 'saved' && fileInput.files.length === 0) {
+    // If no file selected, notify & auto-select file or fallback
+    showToast("📂 Please select or drop a file, or click 'Analyze Currently Saved Resume'!");
+  }
+
   document.getElementById('uploadState').style.display = 'none';
-  document.getElementById('loadingOverlay').classList.add('active');
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('active');
 
   setTimeout(() => {
-    document.getElementById('loadingOverlay').classList.remove('active');
+    overlay.classList.remove('active');
     document.getElementById('resultsContainer').classList.add('visible');
     animateResults();
-  }, 2000);
+  }, 1800);
+}
+
+function resetToUpload() {
+  document.getElementById('resultsContainer').classList.remove('visible');
+  document.getElementById('uploadState').style.display = 'block';
+  document.getElementById('fileBadge').style.display = 'none';
+  document.getElementById('uploadText').textContent = "Click or Drag & Drop your Resume File Here";
+  document.getElementById('fileInput').value = "";
 }
 
 function animateResults() {
-  // Animate score circle
   animateScore(0, 78, 1200);
-
-  // Animate stroke
   const fg = document.getElementById('scoreFg');
   const targetOffset = circumference - (circumference * 78 / 100);
   setTimeout(() => {
     fg.style.strokeDashoffset = targetOffset;
   }, 100);
 
-  // Animate progress bars with stagger
   const fills = document.querySelectorAll('.progress-fill');
   fills.forEach((fill, index) => {
     setTimeout(() => {
@@ -694,7 +668,7 @@ function animateScore(from, to, duration) {
   function update(now) {
     const elapsed = now - start;
     const progress = Math.min(elapsed / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+    const eased = 1 - Math.pow(1 - progress, 3);
     const current = Math.round(from + (to - from) * eased);
     el.textContent = current;
     if (progress < 1) requestAnimationFrame(update);
@@ -705,73 +679,50 @@ function animateScore(from, to, duration) {
 function fixIssue(id) {
   const item = document.getElementById(id);
   if (item) {
-    item.classList.add('fixed');
+    item.style.opacity = "0.5";
+    item.querySelector('.issue-btn').innerText = "✅ Added";
+    item.querySelector('.issue-btn').disabled = true;
+    showToast("Issue fixed & added to your resume!");
   }
 }
 
-function scrollToFix() {
-  document.getElementById('fixAllCard').scrollIntoView({ behavior: 'smooth' });
-}
-
 let isFixed = false;
-
 function fixAll() {
   if (isFixed) return;
-
   const btn = document.getElementById('fixAllBtn');
   btn.disabled = true;
-  btn.innerHTML = '<span style="display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:8px"></span> Optimizing...';
+  btn.innerText = "⏳ Auto-Fixing Resume...";
 
   setTimeout(() => {
     isFixed = true;
-
-    // Animate score from 78 to 94
     animateScore(78, 94, 1200);
 
-    // Update SVG stroke
     const fg = document.getElementById('scoreFg');
     const newOffset = circumference - (circumference * 94 / 100);
     fg.style.strokeDashoffset = newOffset;
     fg.style.stroke = '#10b981';
 
-    // Update grade
     const grade = document.getElementById('gradeBadge');
     grade.textContent = 'A';
     grade.className = 'grade-badge grade-a';
 
-    // Update progress bars
     const fills = document.querySelectorAll('.progress-fill');
     const values = document.querySelectorAll('.score-item-value');
 
-    fills.forEach((fill, i) => {
-      const improved = fill.dataset.improved;
-      setTimeout(() => {
-        fill.style.width = improved + '%';
-        fill.className = 'progress-fill fill-green';
-      }, i * 80);
+    fills.forEach((fill) => {
+      fill.style.width = fill.dataset.improved + '%';
+      fill.className = 'progress-fill fill-green';
     });
 
     values.forEach(val => {
-      const improved = val.dataset.improved;
-      val.textContent = improved + '/100';
+      val.textContent = val.dataset.improved + '/100';
     });
 
-    // Mark critical issues as fixed
-    ['issue1','issue2','issue3','issue4'].forEach(id => {
-      fixIssue(id);
-    });
-
-    // Update button
     btn.disabled = false;
-    btn.innerHTML = '✅ Resume Optimized!';
+    btn.innerText = '✅ Resume Auto-Optimized to 94%!';
     btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-    btn.style.cursor = 'default';
-    btn.onclick = null;
-
-    // Show toast
-    showToast('Resume optimized! Score improved to 94');
-
-  }, 2000);
+    showToast('🎉 Resume fully optimized! ATS score boosted to 94%!');
+  }, 1800);
 }
 
 function showToast(message) {
@@ -780,8 +731,9 @@ function showToast(message) {
   toast.classList.add('show');
   setTimeout(() => {
     toast.classList.remove('show');
-  }, 4000);
+  }, 3500);
 }
 </script>
+<script src="js/ai-copilot.js"></script>
 </body>
 </html>
