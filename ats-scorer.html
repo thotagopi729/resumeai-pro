@@ -19,17 +19,41 @@
     .ats-header h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.25rem; }
     .ats-header p { color: var(--text-tertiary); font-size: 0.9rem; }
 
-    /* Upload Area */
+    /* Upload Container Card */
     .upload-card {
       background: var(--surface-card);
       border: 1px solid var(--border-primary);
       border-radius: var(--radius-xl);
-      padding: 2.5rem;
-      text-align: center;
-      max-width: 680px;
+      padding: 2rem;
+      max-width: 720px;
       margin: 0 auto;
       box-shadow: var(--shadow-lg);
     }
+
+    /* Tabs for Upload vs Paste */
+    .upload-tabs {
+      display: flex;
+      gap: var(--space-2);
+      margin-bottom: var(--space-6);
+      border-bottom: 1px solid var(--border-primary);
+    }
+    .upload-tab-btn {
+      padding: var(--space-3) var(--space-5);
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--text-tertiary);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .upload-tab-btn.active {
+      color: var(--primary-400);
+      border-bottom-color: var(--primary-500);
+    }
+
+    /* Drop Zone */
     .upload-zone {
       border: 2px dashed var(--primary-500);
       border-radius: var(--radius-lg);
@@ -42,15 +66,16 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      text-align: center;
     }
     .upload-zone:hover, .upload-zone.dragover {
       border-color: var(--accent-500);
       background: rgba(99, 102, 241, 0.12);
       transform: scale(1.01);
     }
-    .upload-icon { font-size: 3rem; margin-bottom: 0.75rem; filter: drop-shadow(0 4px 10px rgba(99,102,241,0.3)); }
-    .upload-text { color: var(--text-primary); font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
-    .upload-hint { color: var(--text-tertiary); font-size: 0.8rem; }
+    .upload-icon { font-size: 3.2rem; margin-bottom: 0.75rem; filter: drop-shadow(0 4px 10px rgba(99,102,241,0.3)); }
+    .upload-text { color: var(--text-primary); font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .upload-hint { color: var(--text-tertiary); font-size: 0.85rem; }
     
     .file-details-badge {
       display: none;
@@ -61,42 +86,27 @@
       border: 1px solid var(--success-500);
       border-radius: var(--radius-md);
       color: var(--success-400);
-      font-weight: 600;
+      font-weight: 700;
       margin-top: var(--space-3);
       font-size: var(--text-sm);
     }
 
-    .upload-or {
-      color: var(--text-tertiary);
-      font-size: 0.8rem;
-      font-weight: 700;
-      margin: 1.5rem 0;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .upload-or::before, .upload-or::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border-primary);
-    }
-    
     .btn-row {
       display: flex;
       gap: var(--space-3);
       justify-content: center;
       flex-wrap: wrap;
+      margin-top: var(--space-4);
     }
 
     .btn-analyze {
-      padding: 0.85rem 2rem;
+      padding: 0.9rem 2.2rem;
       background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
       color: #fff;
       border: none;
       border-radius: var(--radius-md);
-      font-weight: 700;
-      font-size: 1rem;
+      font-weight: 800;
+      font-size: 1.05rem;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(99,102,241,0.3);
       transition: all var(--transition-fast);
@@ -107,17 +117,38 @@
     .btn-analyze:hover { filter: brightness(1.15); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
 
     .btn-select-file {
-      padding: 0.85rem 1.75rem;
+      padding: 0.9rem 1.75rem;
       background: var(--bg-tertiary);
       color: var(--text-primary);
       border: 1px solid var(--border-primary);
       border-radius: var(--radius-md);
-      font-weight: 600;
+      font-weight: 700;
       font-size: 0.95rem;
       cursor: pointer;
       transition: all var(--transition-fast);
     }
     .btn-select-file:hover { border-color: var(--primary-400); color: var(--primary-400); }
+
+    /* Paste Text Area */
+    .paste-area {
+      display: none;
+      width: 100%;
+      min-height: 220px;
+      padding: 1rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      resize: vertical;
+      margin-bottom: 1.5rem;
+    }
+    .paste-area:focus {
+      outline: none;
+      border-color: var(--primary-500);
+      background: var(--surface-input);
+    }
 
     /* Loading Overlay */
     .loading-overlay {
@@ -134,8 +165,8 @@
     }
     .loading-overlay.active { display: flex; }
     .spinner {
-      width: 54px;
-      height: 54px;
+      width: 56px;
+      height: 56px;
       border: 4px solid var(--border-primary);
       border-top-color: var(--primary-500);
       border-radius: 50%;
@@ -409,37 +440,58 @@
         <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
         <div>
           <h1 style="font-size:var(--text-xl); font-weight:800">ATS Score Analyzer & Fixer</h1>
-          <p style="font-size:var(--text-xs); color:var(--text-tertiary)">Upload your resume file or evaluate saved resumes to pass ATS screeners.</p>
+          <p style="font-size:var(--text-xs); color:var(--text-tertiary)">Upload your resume file or paste your resume text to analyze ATS compatibility.</p>
         </div>
       </div>
       <button class="theme-btn" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
     </header>
+
+    <!-- Hidden standalone File Input (Outside dropzone to prevent infinite click loop) -->
+    <input type="file" id="fileInput" style="display:none" accept=".pdf,.docx,.txt,.doc" onchange="handleFileSelected(event)">
 
     <div class="content-body" style="max-width:1200px; margin:0 auto">
       
       <!-- Upload Card State -->
       <div id="uploadState">
         <div class="upload-card">
-          <div class="upload-zone" id="dropZone" onclick="triggerFileInput()">
-            <div class="upload-icon">📄</div>
-            <div class="upload-text" id="uploadText">Click or Drag & Drop your Resume File Here</div>
-            <div class="upload-hint">Supports PDF, DOCX, or TXT (Up to 5MB)</div>
-            
-            <div class="file-details-badge" id="fileBadge">
-              <span>✅ Selected File:</span>
-              <span id="fileNameDisplay">resume.pdf</span>
+          
+          <!-- Mode Tabs -->
+          <div class="upload-tabs">
+            <button class="upload-tab-btn active" id="tabUploadBtn" onclick="switchUploadMode('file')">📁 Upload File (PDF/DOCX/TXT)</button>
+            <button class="upload-tab-btn" id="tabPasteBtn" onclick="switchUploadMode('paste')">✍️ Paste Resume Text</button>
+          </div>
+
+          <!-- Mode 1: Drop Zone -->
+          <div id="fileUploadContainer">
+            <div class="upload-zone" id="dropZone">
+              <div class="upload-icon">📄</div>
+              <div class="upload-text" id="uploadText">Click Here or Drag & Drop your Resume File</div>
+              <div class="upload-hint">Supports PDF, DOCX, TXT, or DOC (Up to 10MB)</div>
+              
+              <div class="file-details-badge" id="fileBadge">
+                <span>✅ File Ready:</span>
+                <span id="fileNameDisplay">my_resume.pdf</span>
+              </div>
             </div>
 
-            <input type="file" id="fileInput" style="display:none" accept=".pdf,.docx,.txt" onchange="handleFileSelected(event)">
+            <div class="btn-row">
+              <button class="btn-select-file" id="chooseFileBtn">📁 Choose File from Device</button>
+              <button class="btn-analyze" id="analyzeBtn">🚀 Analyze ATS Score Now</button>
+            </div>
           </div>
 
-          <div class="btn-row">
-            <button class="btn-select-file" onclick="triggerFileInput()">📁 Choose File</button>
-            <button class="btn-analyze" id="analyzeBtn" onclick="startAnalysis()">🚀 Analyze ATS Compatibility</button>
+          <!-- Mode 2: Paste Area -->
+          <div id="pasteTextContainer" style="display:none">
+            <textarea class="paste-area" id="pasteTextInput" placeholder="Paste your full resume text here (Summary, Experience, Education, Skills)..."></textarea>
+            <div class="btn-row">
+              <button class="btn-analyze" onclick="analyzePastedText()">🚀 Analyze Pasted Resume</button>
+            </div>
           </div>
 
-          <div class="upload-or">OR</div>
-          <button class="btn btn-secondary btn-sm" onclick="startAnalysis('saved')">📝 Analyze Currently Saved Resume</button>
+          <div style="margin-top:var(--space-6); padding-top:var(--space-4); border-top:1px solid var(--border-primary)">
+            <button class="btn btn-secondary btn-sm" onclick="runAnalysisDirectly('sample')">⚡ Or Instantly Scan Sample Resume</button>
+          </div>
+
         </div>
       </div>
 
@@ -568,9 +620,42 @@ function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
 }
 
-function triggerFileInput() {
-  document.getElementById('fileInput').click();
+function switchUploadMode(mode) {
+  const tabUploadBtn = document.getElementById('tabUploadBtn');
+  const tabPasteBtn = document.getElementById('tabPasteBtn');
+  const fileContainer = document.getElementById('fileUploadContainer');
+  const pasteContainer = document.getElementById('pasteTextContainer');
+
+  if (mode === 'file') {
+    tabUploadBtn.classList.add('active');
+    tabPasteBtn.classList.remove('active');
+    fileContainer.style.display = 'block';
+    pasteContainer.style.display = 'none';
+  } else {
+    tabPasteBtn.classList.add('active');
+    tabUploadBtn.classList.remove('active');
+    pasteContainer.style.display = 'block';
+    fileContainer.style.display = 'none';
+  }
 }
+
+// File Picker Triggering
+document.getElementById('dropZone').addEventListener('click', function(e) {
+  document.getElementById('fileInput').click();
+});
+document.getElementById('chooseFileBtn').addEventListener('click', function(e) {
+  document.getElementById('fileInput').click();
+});
+document.getElementById('analyzeBtn').addEventListener('click', function(e) {
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput.files.length > 0) {
+    runAnalysisDirectly('file');
+  } else {
+    // If user clicks analyze without selecting a file first, open file picker & auto-analyze!
+    showToast("📂 Please pick a file or paste text below!");
+    document.getElementById('fileInput').click();
+  }
+});
 
 let uploadedTextContent = "";
 
@@ -589,8 +674,11 @@ function displaySelectedFile(file) {
   
   nameDisp.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
   badge.style.display = 'inline-flex';
-  text.textContent = "File Ready for ATS Analysis!";
+  text.textContent = "✅ File Uploaded & Ready!";
   showToast(`✅ Selected ${file.name}`);
+
+  // Automatically start analysis when file is selected!
+  runAnalysisDirectly('file');
 }
 
 function readFileText(file) {
@@ -601,7 +689,7 @@ function readFileText(file) {
   reader.readAsText(file);
 }
 
-// Drag and Drop Handling
+// Drag and Drop
 const dropZone = document.getElementById('dropZone');
 
 ['dragenter', 'dragover'].forEach(eventName => {
@@ -619,6 +707,7 @@ const dropZone = document.getElementById('dropZone');
 });
 
 dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
   const dt = e.dataTransfer;
   const files = dt.files;
   if (files.length > 0) {
@@ -628,14 +717,21 @@ dropZone.addEventListener('drop', (e) => {
   }
 });
 
+function analyzePastedText() {
+  const text = document.getElementById('pasteTextInput').value.trim();
+  if (!text) {
+    showToast("⚠️ Please paste your resume text in the box before analyzing!");
+    return;
+  }
+  uploadedTextContent = text;
+  runAnalysisDirectly('paste');
+}
+
 // Analysis execution
 const circumference = 2 * Math.PI * 68; // ~427.26
 let calculatedOverallScore = 78;
 
-function startAnalysis(mode) {
-  // If user clicks analyze without picking file, auto-trigger file pick or run smooth default analysis
-  const fileInput = document.getElementById('fileInput');
-
+function runAnalysisDirectly(source) {
   document.getElementById('uploadState').style.display = 'none';
   const overlay = document.getElementById('loadingOverlay');
   overlay.classList.add('active');
@@ -644,27 +740,24 @@ function startAnalysis(mode) {
     overlay.classList.remove('active');
     document.getElementById('resultsContainer').classList.add('visible');
     
-    // Parse uploaded content if available
     if (uploadedTextContent.length > 10) {
       calculateRealATSMetrics(uploadedTextContent);
     }
     
     animateResults();
-  }, 1600);
+  }, 1400);
 }
 
 function calculateRealATSMetrics(text) {
   const t = text.toLowerCase();
   
-  // Hard keywords count
   const keywords = ['javascript', 'python', 'react', 'node', 'sql', 'typescript', 'aws', 'docker', 'agile', 'git', 'api', 'leader'];
   let found = 0;
   keywords.forEach(k => { if (t.includes(k)) found++; });
 
-  // Quantified metrics count (% or numbers)
   const metricsCount = (t.match(/\d+%/g) || []).length + (t.match(/\$\d+/g) || []).length;
 
-  let keywordScore = Math.min(60 + (found * 4), 95);
+  let keywordScore = Math.min(60 + (found * 5), 95);
   let metricsScore = Math.min(50 + (metricsCount * 12), 92);
   let formatScore = 88;
 
@@ -681,8 +774,9 @@ function resetToUpload() {
   document.getElementById('resultsContainer').classList.remove('visible');
   document.getElementById('uploadState').style.display = 'block';
   document.getElementById('fileBadge').style.display = 'none';
-  document.getElementById('uploadText').textContent = "Click or Drag & Drop your Resume File Here";
+  document.getElementById('uploadText').textContent = "Click Here or Drag & Drop your Resume File";
   document.getElementById('fileInput').value = "";
+  document.getElementById('pasteTextInput').value = "";
   uploadedTextContent = "";
 }
 
