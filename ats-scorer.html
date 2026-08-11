@@ -658,6 +658,9 @@
                 <button class="download-btn-primary" onclick="downloadEnhancedResume()">
                   <span>📥</span> Download Enhanced Resume
                 </button>
+                <button class="btn btn-secondary btn-sm" onclick="downloadATSReport()" style="width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem">
+                  <span>📄</span> Download ATS Score Report
+                </button>
                 <button class="edit-ai-btn" onclick="openAIEditorModal()">
                   <span>✨</span> Edit & Update with AI
                 </button>
@@ -1087,6 +1090,46 @@ function downloadEnhancedResume() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('📥 Enhanced ATS Resume downloaded successfully!');
+}
+
+/* Download ATS Compatibility Report Summary */
+function downloadATSReport() {
+  const score = document.getElementById('scoreNumber').textContent || '78';
+  const grade = document.getElementById('gradeBadge').textContent || 'B';
+  const kw = document.getElementById('valKeyword').textContent || '78/100';
+  const fmt = document.getElementById('valFormat').textContent || '88/100';
+  const met = document.getElementById('valMetrics').textContent || '65/100';
+
+  const report = `=====================================================
+RESUMEAI PRO - ATS COMPATIBILITY ANALYSIS REPORT
+=====================================================
+Overall ATS Compatibility Score: ${score}% (Grade: ${grade})
+Date of Analysis: ${new Date().toLocaleDateString()}
+
+CATEGORY BREAKDOWN:
+- Keyword Optimization: ${kw}
+- Formatting & Layout Safety: ${fmt}
+- Quantified Impact Metrics: ${met}
+
+ACTIONABLE RECOMMENDATIONS:
+1. Inject missing technical keywords (TypeScript, CI/CD, Microservices, Agile).
+2. Quantify bullet points with metrics (%, $, volume, team scale).
+3. Keep standard ATS-safe headings (Experience, Education, Skills).
+
+OPTIMIZATION STATUS:
+One-Click Fix Target ATS Score: 98% (Grade A+)
+=====================================================`;
+
+  const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ATS_Score_Report_${score}Percent.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📄 ATS Score Report downloaded!');
 }
 
 /* AI Resume Editor Modal & Shortcuts */
