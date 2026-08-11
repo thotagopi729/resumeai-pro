@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/ai-copilot.css">
   <style>
-    /* CSS fallback map for tokens */
     :root {
       --card-bg: var(--surface-card, #1e1f2e);
       --border: var(--border-primary, rgba(255, 255, 255, 0.12));
@@ -427,7 +426,7 @@
             <div class="upload-hint">Supports PDF, DOCX, or TXT (Up to 5MB)</div>
             
             <div class="file-details-badge" id="fileBadge">
-              <span>✅ Selected:</span>
+              <span>✅ Selected File:</span>
               <span id="fileNameDisplay">resume.pdf</span>
             </div>
 
@@ -469,7 +468,7 @@
               </div>
 
               <div class="grade-badge grade-b" id="gradeBadge">B</div>
-              <p style="font-size:var(--text-xs); color:var(--text-tertiary); margin-bottom:var(--space-4)">Good match, but missing 4 key technical keywords.</p>
+              <p style="font-size:var(--text-xs); color:var(--text-tertiary); margin-bottom:var(--space-4)" id="scoreSummaryText">Analyzed resume file against ATS parsing standards.</p>
               
               <button class="btn-reupload" onclick="resetToUpload()">🔄 Upload Another Resume</button>
             </div>
@@ -485,30 +484,30 @@
               <div class="score-item">
                 <div class="score-item-header">
                   <span class="score-item-label">Keyword Optimization</span>
-                  <span class="score-item-value" data-improved="92">72/100</span>
+                  <span class="score-item-value" id="valKeyword" data-improved="94">78/100</span>
                 </div>
                 <div class="progress-bar">
-                  <div class="progress-fill fill-yellow" data-width="72" data-improved="92"></div>
+                  <div class="progress-fill fill-yellow" id="barKeyword" data-width="78" data-improved="94"></div>
                 </div>
               </div>
 
               <div class="score-item">
                 <div class="score-item-header">
                   <span class="score-item-label">Formatting & Layout Safety</span>
-                  <span class="score-item-value" data-improved="98">88/100</span>
+                  <span class="score-item-value" id="valFormat" data-improved="98">88/100</span>
                 </div>
                 <div class="progress-bar">
-                  <div class="progress-fill fill-green" data-width="88" data-improved="98"></div>
+                  <div class="progress-fill fill-green" id="barFormat" data-width="88" data-improved="98"></div>
                 </div>
               </div>
 
               <div class="score-item">
                 <div class="score-item-header">
                   <span class="score-item-label">Quantified Impact Metrics</span>
-                  <span class="score-item-value" data-improved="94">68/100</span>
+                  <span class="score-item-value" id="valMetrics" data-improved="96">65/100</span>
                 </div>
                 <div class="progress-bar">
-                  <div class="progress-fill fill-yellow" data-width="68" data-improved="94"></div>
+                  <div class="progress-fill fill-yellow" id="barMetrics" data-width="65" data-improved="96"></div>
                 </div>
               </div>
             </div>
@@ -519,13 +518,13 @@
               
               <div class="issue-item" id="issue1">
                 <span class="issue-icon">💡</span>
-                <div class="issue-text">Add metric values (%, $, scale) to your bullet points to quantify your experience.</div>
+                <div class="issue-text">Add metric values (%, $, scale) to your experience points to quantify business impact.</div>
                 <button class="issue-btn issue-btn-fix" onclick="fixIssue('issue1')">Fix Now</button>
               </div>
 
               <div class="issue-item" id="issue2">
                 <span class="issue-icon">🔍</span>
-                <div class="issue-text">Include missing hard skills: <strong>TypeScript, Agile, System Architecture</strong>.</div>
+                <div class="issue-text">Include missing hard technical skills: <strong>TypeScript, CI/CD, Microservices</strong>.</div>
                 <button class="issue-btn issue-btn-fix" onclick="fixIssue('issue2')">Add Skills</button>
               </div>
             </div>
@@ -533,7 +532,7 @@
             <!-- Missing Keywords -->
             <div class="detail-card">
               <div class="detail-card-title">🏷️ Missing Keywords for Target Jobs</div>
-              <div class="keyword-cloud">
+              <div class="keyword-cloud" id="missingKeywordsCloud">
                 <span class="keyword-badge">+ Agile Methodology</span>
                 <span class="keyword-badge">+ CI/CD Pipelines</span>
                 <span class="keyword-badge">+ System Architecture</span>
@@ -544,7 +543,7 @@
 
             <!-- One-Click Fix -->
             <div class="detail-card" style="text-align:center">
-              <button class="btn-fix-all" id="fixAllBtn" onclick="fixAll()">✨ Auto-Fix All Issues (Improve Score to 94%)</button>
+              <button class="btn-fix-all" id="fixAllBtn" onclick="fixAll()">✨ Auto-Fix All Issues (Improve Score to 95%)</button>
             </div>
 
           </div>
@@ -573,10 +572,13 @@ function triggerFileInput() {
   document.getElementById('fileInput').click();
 }
 
+let uploadedTextContent = "";
+
 function handleFileSelected(event) {
   const file = event.target.files[0];
   if (file) {
     displaySelectedFile(file);
+    readFileText(file);
   }
 }
 
@@ -588,6 +590,15 @@ function displaySelectedFile(file) {
   nameDisp.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
   badge.style.display = 'inline-flex';
   text.textContent = "File Ready for ATS Analysis!";
+  showToast(`✅ Selected ${file.name}`);
+}
+
+function readFileText(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    uploadedTextContent = e.target.result || "";
+  };
+  reader.readAsText(file);
 }
 
 // Drag and Drop Handling
@@ -613,18 +624,17 @@ dropZone.addEventListener('drop', (e) => {
   if (files.length > 0) {
     document.getElementById('fileInput').files = files;
     displaySelectedFile(files[0]);
+    readFileText(files[0]);
   }
 });
 
 // Analysis execution
 const circumference = 2 * Math.PI * 68; // ~427.26
+let calculatedOverallScore = 78;
 
 function startAnalysis(mode) {
+  // If user clicks analyze without picking file, auto-trigger file pick or run smooth default analysis
   const fileInput = document.getElementById('fileInput');
-  if (mode !== 'saved' && fileInput.files.length === 0) {
-    // If no file selected, notify & auto-select file or fallback
-    showToast("📂 Please select or drop a file, or click 'Analyze Currently Saved Resume'!");
-  }
 
   document.getElementById('uploadState').style.display = 'none';
   const overlay = document.getElementById('loadingOverlay');
@@ -633,8 +643,38 @@ function startAnalysis(mode) {
   setTimeout(() => {
     overlay.classList.remove('active');
     document.getElementById('resultsContainer').classList.add('visible');
+    
+    // Parse uploaded content if available
+    if (uploadedTextContent.length > 10) {
+      calculateRealATSMetrics(uploadedTextContent);
+    }
+    
     animateResults();
-  }, 1800);
+  }, 1600);
+}
+
+function calculateRealATSMetrics(text) {
+  const t = text.toLowerCase();
+  
+  // Hard keywords count
+  const keywords = ['javascript', 'python', 'react', 'node', 'sql', 'typescript', 'aws', 'docker', 'agile', 'git', 'api', 'leader'];
+  let found = 0;
+  keywords.forEach(k => { if (t.includes(k)) found++; });
+
+  // Quantified metrics count (% or numbers)
+  const metricsCount = (t.match(/\d+%/g) || []).length + (t.match(/\$\d+/g) || []).length;
+
+  let keywordScore = Math.min(60 + (found * 4), 95);
+  let metricsScore = Math.min(50 + (metricsCount * 12), 92);
+  let formatScore = 88;
+
+  calculatedOverallScore = Math.round((keywordScore + metricsScore + formatScore) / 3);
+
+  document.getElementById('barKeyword').dataset.width = keywordScore;
+  document.getElementById('valKeyword').textContent = `${keywordScore}/100`;
+
+  document.getElementById('barMetrics').dataset.width = metricsScore;
+  document.getElementById('valMetrics').textContent = `${metricsScore}/100`;
 }
 
 function resetToUpload() {
@@ -643,14 +683,26 @@ function resetToUpload() {
   document.getElementById('fileBadge').style.display = 'none';
   document.getElementById('uploadText').textContent = "Click or Drag & Drop your Resume File Here";
   document.getElementById('fileInput').value = "";
+  uploadedTextContent = "";
 }
 
 function animateResults() {
-  animateScore(0, 78, 1200);
+  const targetScore = calculatedOverallScore || 78;
+  animateScore(0, targetScore, 1200);
+  
   const fg = document.getElementById('scoreFg');
-  const targetOffset = circumference - (circumference * 78 / 100);
+  const targetOffset = circumference - (circumference * targetScore / 100);
   setTimeout(() => {
     fg.style.strokeDashoffset = targetOffset;
+    if (targetScore >= 85) {
+      fg.style.stroke = '#10b981';
+      document.getElementById('gradeBadge').textContent = 'A';
+      document.getElementById('gradeBadge').className = 'grade-badge grade-a';
+    } else {
+      fg.style.stroke = '#f59e0b';
+      document.getElementById('gradeBadge').textContent = 'B';
+      document.getElementById('gradeBadge').className = 'grade-badge grade-b';
+    }
   }, 100);
 
   const fills = document.querySelectorAll('.progress-fill');
@@ -695,10 +747,10 @@ function fixAll() {
 
   setTimeout(() => {
     isFixed = true;
-    animateScore(78, 94, 1200);
+    animateScore(calculatedOverallScore || 78, 95, 1200);
 
     const fg = document.getElementById('scoreFg');
-    const newOffset = circumference - (circumference * 94 / 100);
+    const newOffset = circumference - (circumference * 95 / 100);
     fg.style.strokeDashoffset = newOffset;
     fg.style.stroke = '#10b981';
 
@@ -710,18 +762,18 @@ function fixAll() {
     const values = document.querySelectorAll('.score-item-value');
 
     fills.forEach((fill) => {
-      fill.style.width = fill.dataset.improved + '%';
+      fill.style.width = (fill.dataset.improved || 95) + '%';
       fill.className = 'progress-fill fill-green';
     });
 
     values.forEach(val => {
-      val.textContent = val.dataset.improved + '/100';
+      val.textContent = (val.dataset.improved || 95) + '/100';
     });
 
     btn.disabled = false;
-    btn.innerText = '✅ Resume Auto-Optimized to 94%!';
+    btn.innerText = '✅ Resume Auto-Optimized to 95%!';
     btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-    showToast('🎉 Resume fully optimized! ATS score boosted to 94%!');
+    showToast('🎉 Resume fully optimized! ATS score boosted to 95%!');
   }, 1800);
 }
 
